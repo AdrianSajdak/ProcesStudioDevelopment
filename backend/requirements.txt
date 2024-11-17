@@ -1,0 +1,9 @@
+<<<<<<< HEAD
+django
+psycopg2-binary
+django-cors-headers
+=======
+django
+psycopg2-binary
+django-cors-headers
+>>>>>>> f9c96ea (Initial Commit)
