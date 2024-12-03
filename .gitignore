@@ -1,8 +1,5 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-<<<<<<< HEAD
-=======
 __pycache__
->>>>>>> f9c96ea (Initial Commit)
 
 # dependencies
 /node_modules

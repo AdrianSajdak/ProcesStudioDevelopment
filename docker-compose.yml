@@ -11,11 +11,15 @@ services:
             - "5432:5432"
         volumes:
             - postgres_data:/var/lib/postgresql/data
+        networks:
+            - backend
+            - webapp
 
 
     backend:
         build:
             context: ./backend
+            dockerfile: Dockerfile
         command: python manage.py runserver 0.0.0.0:8000
         volumes:
             - ./backend:/app
@@ -25,17 +29,19 @@ services:
             - postgres
         networks:
             - backend
-            - frontend
+            - webapp
 
     frontend:
         build:
             context: ./frontend
+            dockerfile: Dockerfile
         ports:
             - "3000:80"  # Mapujemy port 80 w kontenerze na port 3000 na hoście
         depends_on:
             - backend
         networks:
             - frontend
+            - webapp
 
     pgadmin:
         image: dpage/pgadmin4
@@ -50,6 +56,7 @@ services:
             - postgres
         networks:
             - backend
+            - webapp
 
 
 volumes:
@@ -59,3 +66,4 @@ volumes:
 networks:
     backend:
     frontend:
+    webapp:

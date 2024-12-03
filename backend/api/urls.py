@@ -1,6 +1,16 @@
 from django.urls import path
-from .views import hello_world
+from .views import *
+from rest_framework.routers import DefaultRouter
 
-urlpatterns = [
-    path('hello/', hello_world, name='hello_world'),
-]
+router = DefaultRouter()
+router.register('projects', ProjectViewset, basename='projects')
+# router.register('users', UserViewset, basename='users')
+
+urlpatterns = router.urls
+
+
+
+
+# urlpatterns = [
+#     path('', home),
+# ]
