@@ -1,41 +1,61 @@
+// Login.js
 import React, { useState } from 'react';
-import axios from 'axios';
+import { Box, TextField, Button, Typography } from '@mui/material';
+import AxiosInstance from '../Axios';
+import { useNavigate } from 'react-router-dom';
 
-function Login() {
-  const [credentials, setCredentials] = useState({
-    username: '',
-    password: '',
-  });
+function Login({ onLogin }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error] = useState('');
+  const navigate = useNavigate();
 
-  const [errors, setErrors] = useState(null);
-
-  const handleChange = (e) => {
-    setCredentials({...credentials, [e.target.name]: e.target.value});
-  }
-
-  const handleSubmit = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    axios.post('/api/login/', credentials)
-      .then(response => {
-        console.log(response.data);
-        localStorage.setItem('access_token', response.data.access);
-        localStorage.setItem('refresh_token', response.data.refresh);
-        // Przekieruj lub zaktualizuj stan aplikacji
-      })
-      .catch(error => {
-        if (error.response) {
-          setErrors(error.response.data);
-        }
+    try {
+      const response = await AxiosInstance.post('/token/', {
+        username,
+        password
       });
+      const { access, refresh } = response.data;
+      onLogin(access);
+      navigate('/');
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('Invalid credentials');
+    }
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input type="text" name="username" placeholder="Nazwa użytkownika" onChange={handleChange} required />
-      <input type="password" name="password" placeholder="Hasło" onChange={handleChange} required />
-      <button type="submit">Zaloguj się</button>
-      {errors && <div>{JSON.stringify(errors)}</div>}
-    </form>
+    <Box 
+      component="form"
+      onSubmit={handleLogin}
+      sx={{
+        width: '300px', 
+        margin: 'auto', 
+        marginTop: '100px', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: 2
+      }}
+    >
+      <Typography variant="h5" textAlign="center">Zaloguj się</Typography>
+      {error && <Typography color="error">{error}</Typography>}
+      <TextField 
+        label="Username" 
+        value={username} 
+        onChange={(e) => setUsername(e.target.value)}
+        required
+      />
+      <TextField 
+        label="Password" 
+        type="password"
+        value={password} 
+        onChange={(e) => setPassword(e.target.value)}
+        required
+      />
+      <Button variant="contained" type="submit">Zaloguj</Button>
+    </Box>
   );
 }
 

@@ -1,11 +1,5 @@
 from django.db import models
-
-# class User(models.Model):
-#     first_name = models.CharField(max_length=50)
-#     last_name = models.CharField(max_length=50)
-#     email = models.EmailField(unique=True, max_length=100)
-#     password = models.CharField(max_length=100)
-#     created = models.DateTimeField(auto_now_add=True)
+from django.contrib.auth.models import AbstractUser
 
 class Project(models.Model):
     name =models.CharField(unique = True, max_length=100)
@@ -18,4 +12,12 @@ class Project(models.Model):
 
     def __str__(self) -> str:
         return self.name
-    
+
+
+class User(AbstractUser):
+    ROLE_CHOICES = (
+        ('Boss', 'Boss'),
+        ('Employee', 'Employee'),
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='Employee')
+    profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)

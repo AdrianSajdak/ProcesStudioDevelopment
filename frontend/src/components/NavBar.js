@@ -5,7 +5,6 @@ import AppBar from '@mui/material/AppBar';
 import CssBaseline from '@mui/material/CssBaseline';
 import Toolbar from '@mui/material/Toolbar';
 import List from '@mui/material/List';
-import Typography from '@mui/material/Typography';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
@@ -20,9 +19,12 @@ import { Link, useLocation } from 'react-router-dom';
 import Footer from './Footer';
 import logo_ps from './images/logo_ps.png';
 import { IconButton } from '@mui/material';
+import AccountMenu from './AccountMenu';
+
+
 
 export default function ClippedDrawer(props) {
-    const {drawerWidth, content} = props
+    const {drawerWidth, content, onLogout} = props
     const location = useLocation();
     const path = location.pathname;
 
@@ -89,20 +91,28 @@ export default function ClippedDrawer(props) {
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
       <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-        <Toolbar>
+        <Toolbar
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton
+              color = "inherit"
+              onClick={changeOpenStatus}
+              sx={{
+                mr: 2,
+                display: { sm: 'none' }
+              }}
+              >
+              <MenuIcon />
+            </IconButton>
 
-          <IconButton
-            color = "inherit"
-            onClick={changeOpenStatus}
-            sx={{
-              mr: 2,
-              display: { sm: 'none' }
-            }}
-            >
-            <MenuIcon />
-          </IconButton>
-
-          <img src={logo_ps} alt="logo" style={{width: '50px', height: '25px'}} />
+            <img src={logo_ps} alt="logo" style={{width: '50px', height: '25px'}} />
+          </Box>
+          
+          <AccountMenu onLogout={onLogout} sx={{ marginLeft: 'auto' }} />
 
         </Toolbar>
       </AppBar>
