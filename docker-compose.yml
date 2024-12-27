@@ -36,7 +36,7 @@ services:
             context: ./frontend
             dockerfile: Dockerfile
         ports:
-            - "3000:80"  # Mapujemy port 80 w kontenerze na port 3000 na hoście
+            - "3000:80"
         depends_on:
             - backend
         networks:

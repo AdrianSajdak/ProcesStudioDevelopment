@@ -1,4 +1,3 @@
-// Login.js
 import React, { useState } from 'react';
 import { Box, TextField, Button, Typography } from '@mui/material';
 import AxiosInstance from '../Axios';
@@ -18,6 +17,10 @@ function Login({ onLogin }) {
         password
       });
       const { access, refresh } = response.data;
+
+      sessionStorage.setItem('accessToken', access);
+      sessionStorage.setItem('refreshToken', refresh);
+      
       onLogin(access);
       navigate('/');
     } catch (error) {

@@ -79,7 +79,7 @@ export const wymiarowaniezginanie = (MSd, b, d, fcd, fyd, Es) => {
 };
 
 export const wsppelzania = () => {
-  const phi = 2.5; // DO OBLICZENIA!
+  const phi = 2.5;
   return phi;
 };
 
@@ -119,7 +119,7 @@ export const wymiarowanienaryse = (wkmax, As, b, d, Mk, Ecm, Es, phi, alpha, h, 
       As = As + As * EPS;
     }
     i = i + 1;
-    if (i > 1000) break; // Zapobieganie nieskończonej pętli
+    if (i > 1000) break;
   }
   return As;
 };

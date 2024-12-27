@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const accessToken = localStorage.getItem('access_token');
+const accessToken = sessionStorage.getItem('accessToken');
 
 axios.defaults.headers.common['Authorization'] = accessToken ? `Bearer ${accessToken}` : '';
 

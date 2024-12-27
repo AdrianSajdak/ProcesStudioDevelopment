@@ -4,11 +4,10 @@ from django.contrib.auth.hashers import make_password
 from rest_framework.validators import UniqueValidator
 
 
-# PROJECTS
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
-        fields = ('name', 'start_date', 'end_date', 'comments', 'status', 'created', 'modified')
+        fields = ('id', 'name', 'start_date', 'end_date', 'comments', 'status', 'created', 'modified')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -35,8 +34,25 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         password = validated_data.pop('password', None)
         user = User(**validated_data)
-        # Hashowanie hasła
+
         if password is not None:
             user.password = make_password(password)
         user.save()
         return user
+
+
+class TaskSerializer(serializers.ModelSerializer):
+    assigned_user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), required=True
+    )
+    author = UserSerializer(read_only=True)
+    assigned_user_username = serializers.ReadOnlyField(source='assigned_user.username')
+
+    class Meta:
+        model = Task
+        fields = [
+            'id', 'name', 'description', 'status', 'work_hours', 'comments',
+            'start_date', 'end_date', 'assigned_user', 'assigned_user_username',
+            'created_date', 'modified_date', 'author'
+        ]
+        read_only_fields = ['created_date', 'modified_date', 'author']

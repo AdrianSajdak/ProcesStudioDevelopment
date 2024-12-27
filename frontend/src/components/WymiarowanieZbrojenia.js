@@ -15,7 +15,6 @@ import {
   FormControlLabel,
 } from '@mui/material';
 
-// Import danych i funkcji obliczeniowych
 import {
   N,
   kN,
@@ -42,7 +41,6 @@ import {
 const WymiarowanieZbrojenia = () => {
   const [tabValue, setTabValue] = useState(0);
 
-  // Dane materiałowe
   const [klasaBetonu, setKlasaBetonu] = useState(betonData[2]);
   const [klasaStali, setKlasaStali] = useState(stalData[1]);
 
@@ -53,18 +51,16 @@ const WymiarowanieZbrojenia = () => {
   const [fyk, setFyk] = useState(klasaStali.value);
   const [fyd, setFyd] = useState(klasaStali.value / gammas);
 
-  // Dane przekroju
   const [MSd, setMSd] = useState(0);
-  const [h, setH] = useState(50 * cm);
-  const [b, setB] = useState(25 * cm);
-  const [cnom, setCnom] = useState(25 * mm);
+  const [h, setH] = useState(0 * cm);
+  const [b, setB] = useState(0 * cm);
+  const [cnom, setCnom] = useState(0 * mm);
   const [fi, setFi] = useState(20 * mm);
   const [d, setD] = useState(h - cnom - fi);
 
   const [Asreq, setAsreq] = useState(1.0 * cm * cm);
   const [resultAsreq, setResultAsreq] = useState(null);
 
-  // Zarysowanie
   const [Mcr, setMcr] = useState(0);
   const [Mk, setMk] = useState(0);
   const [Asprov, setAsprov] = useState(Asreq);
@@ -73,12 +69,10 @@ const WymiarowanieZbrojenia = () => {
   const [wkmax, setWkmax] = useState(0.3 * mm);
   const [Asreq3, setAsreq3] = useState(Asreq);
 
-  // Obsługa zmiany zakładek
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
 
-  // Obsługa obliczeń
   const handleCalculateAsreq = () => {
     const result = wymiarowaniezginanie(MSd * kN * m, b, d, fcd, fyd, Es);
     setResultAsreq(result);
@@ -98,7 +92,6 @@ const WymiarowanieZbrojenia = () => {
     setAsreq3(Asreq3Result);
   };
 
-  // Obsługa zmiany klasy betonu
   const handleKlasaBetonuChange = (event) => {
     const selectedBeton = betonData.find(
       (beton) => beton.name === event.target.value
@@ -110,7 +103,6 @@ const WymiarowanieZbrojenia = () => {
     setFcd((alfacc * selectedBeton.f_ck) / gammac);
   };
 
-  // Obsługa zmiany klasy stali
   const handleKlasaStaliChange = (event) => {
     const selectedStal = stalData.find(
       (stal) => stal.value === event.target.value
@@ -120,20 +112,18 @@ const WymiarowanieZbrojenia = () => {
     setFyd(selectedStal.value / gammas);
   };
 
-  // Aktualizacja 'd' po zmianie 'h', 'cnom' lub 'fi'
   useEffect(() => {
     setD(h - cnom - fi);
   }, [h, cnom, fi]);
 
-  // Obliczanie Mcr
   useEffect(() => {
     const McrValue = (fctm * b * Math.pow(d, 2)) / 6;
     setMcr(McrValue);
   }, [fctm, b, d]);
 
   return (
-    <Box>
-      <Typography variant="h4">Wymiarowanie zbrojenia</Typography>
+    <Box  sx={{ maxWidth: 700, margin: '0 auto', p: 2 }}>
+      <Typography variant="h4" align='center'>Wymiarowanie zbrojenia</Typography>
       <Tabs
         value={tabValue}
         onChange={handleTabChange}
@@ -149,7 +139,7 @@ const WymiarowanieZbrojenia = () => {
       {/* Dane materiałowe */}
       {tabValue === 0 && (
         <Box p={2}>
-          <Typography variant="h5">Zginanie [SGN]</Typography>
+          <Typography variant="h5" align='center'>Zginanie [SGN]</Typography>
           <Box mt={2}>
             <FormControl fullWidth>
               <InputLabel>Klasa betonu</InputLabel>
@@ -166,7 +156,7 @@ const WymiarowanieZbrojenia = () => {
               </Select>
             </FormControl>
             <FormControl fullWidth sx={{ mt: 2 }}>
-              <InputLabel>Klasa stali</InputLabel>
+              <InputLabel >Klasa stali</InputLabel>
               <Select
                 value={klasaStali.value}
                 label="Klasa stali"
@@ -186,7 +176,7 @@ const WymiarowanieZbrojenia = () => {
       {/* Zginanie [SGN] */}
       {tabValue === 1 && (
         <Box p={2}>
-          <Typography variant="h5">Zginanie [SGN]</Typography>
+          <Typography variant="h5" align='center'>Zginanie [SGN]</Typography>
           <Box component="form" sx={{ mt: 2 }}>
             <TextField
               label="Moment obl. [kN*m]"
@@ -227,7 +217,7 @@ const WymiarowanieZbrojenia = () => {
                 label="Średnica zbrojenia [mm]"
                 onChange={(e) => setFi(parseFloat(e.target.value) * mm)}
               >
-                {[10, 12, 16, 20, 25, 32].map((diameter) => (
+                {[8, 10, 12, 14, 16, 18, 20, 22, 25, 28, 30, 32, 36, 40].map((diameter) => (
                   <MenuItem key={diameter} value={diameter}>
                     {diameter}
                   </MenuItem>
@@ -235,11 +225,14 @@ const WymiarowanieZbrojenia = () => {
               </Select>
             </FormControl>
             <Divider sx={{ my: 2 }} />
-            <Button variant="contained" onClick={handleCalculateAsreq}>
-              Oblicz
-            </Button>
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+              <Button variant="contained" onClick={handleCalculateAsreq} >
+                Oblicz
+              </Button>
+            </Box>
+            
             {resultAsreq && (
-              <Typography variant="body1" sx={{ mt: 2 }}>
+              <Typography variant="body1" align='center' sx={{ mt: 2 }}>
                 Wymagane pole zbrojenia na zginanie:{' '}
                 <strong>
                   {typeof resultAsreq === 'number'
@@ -255,9 +248,9 @@ const WymiarowanieZbrojenia = () => {
       {/* Zarysowanie [SGU] */}
       {tabValue === 2 && (
         <Box p={2}>
-          <Typography variant="h5">Zarysowanie [SGU]</Typography>
+          <Typography variant="h5" align='center'>Zarysowanie [SGU]</Typography>
           <Box component="form" sx={{ mt: 2 }}>
-            <Typography variant="body1">
+            <Typography variant="body1" align='center'>
               Moment rysujący Mcr = {(Mcr / (kN * m)).toFixed(2)} kNm
             </Typography>
             <Divider sx={{ my: 2 }} />
@@ -276,15 +269,18 @@ const WymiarowanieZbrojenia = () => {
               onChange={(e) => setAsprov(parseFloat(e.target.value) * cm * cm)}
               fullWidth
             />
-            <Button
-              variant="contained"
-              onClick={handleCalculateWk}
-              sx={{ mt: 2 }}
-            >
-              Oblicz ryse
-            </Button>
+            <Box align='center'>
+              <Button
+                variant="contained"
+                onClick={handleCalculateWk}
+                sx={{ mt: 2 }}
+              >
+                Oblicz ryse
+              </Button>
+            </Box>
+            
             {wk !== 0 && (
-              <Typography variant="body1" sx={{ mt: 2 }}>
+              <Typography variant="body1" align='center' sx={{ mt: 2 }}>
                 Rozwarcie rysy dla przyjętego zbrojenia wk ={' '}
                 {(wk / mm).toFixed(2)} mm
               </Typography>
@@ -317,13 +313,17 @@ const WymiarowanieZbrojenia = () => {
                     ))}
                   </Select>
                 </FormControl>
-                <Button
-                  variant="contained"
-                  onClick={handleCalculateAsreq3}
-                  sx={{ mt: 2 }}
-                >
-                  Oblicz zbrojenie
-                </Button>
+
+                <Box align='center'>
+                  <Button
+                    variant="contained"
+                    onClick={handleCalculateAsreq3}
+                    sx={{ mt: 2 }}
+                  >
+                    Oblicz zbrojenie
+                  </Button>
+                </Box>
+
                 {Asreq3 !== 0 && (
                   <Typography variant="body1" sx={{ mt: 2 }}>
                     Wymagane pole zbrojenia na zarysowanie: Asreq ={' '}

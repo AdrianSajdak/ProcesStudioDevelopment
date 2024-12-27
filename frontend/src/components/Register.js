@@ -1,4 +1,3 @@
-// Register.js
 import React, { useState } from 'react';
 import { Box, TextField, Button, Typography, MenuItem } from '@mui/material';
 import AxiosInstance from '../Axios';
@@ -8,14 +7,14 @@ function Register() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState('Worker');
+  const [role, setRole] = useState('Employee');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
   const roles = [
     { value: 'Boss', label: 'Boss' },
-    { value: 'Worker', label: 'Worker' },
+    { value: 'Employee', label: 'Employee' },
   ];
 
   const handleRegister = async (e) => {
@@ -31,7 +30,7 @@ function Register() {
       setUsername('');
       setPassword('');
       setEmail('');
-      setRole('Worker');
+      setRole('Employee');
       setError('');
     } catch (err) {
       setError('Wystąpił błąd podczas rejestracji.');

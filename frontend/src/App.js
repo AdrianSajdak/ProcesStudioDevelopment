@@ -2,36 +2,35 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Home from './components/Home';
 import About from './components/About';
-import Create from './components/Create';
 import NavBar from './components/NavBar';
 import WymiarowanieZbrojenia from './components/WymiarowanieZbrojenia';
 import Projects from './components/Projects';
 import Login from './components/Login';
-import Register from './components/Register';
 import Profile from './components/Profile';
+import Tasks from './components/Tasks';
+import Slicing from './components/Slicing';
 import { useState } from 'react';
 
 
 function App() {
   const myWidth = 200;
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [accessToken, setAccessToken] = useState(sessionStorage.getItem('accessToken'));
 
-  const handleLogin = (newToken) => {
-    localStorage.setItem('token', newToken);
-    setToken(newToken);
+  const handleLogin = (newAccessToken) => {
+    setAccessToken(newAccessToken);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('refreshToken');
+    setAccessToken(null);
   };
 
-  if (!token) {
+  if (!accessToken) {
     return (
       <div className="App">
         <Routes>
           <Route path="/login" element={<Login onLogin={handleLogin} />} />
-          <Route path="/register" element={<Register />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </div>
@@ -46,9 +45,10 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
-            <Route path="/create" element={<Create />} />
             <Route path="/bending" element={<WymiarowanieZbrojenia />} />
+            <Route path="/slicing" element={<Slicing />} />
             <Route path="/projects" element={<Projects />} />
+            <Route path="/tasks" element={<Tasks />} />
             <Route path="/profile" element={<Profile onLogout={handleLogout} />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>

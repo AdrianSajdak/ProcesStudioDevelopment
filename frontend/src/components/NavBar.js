@@ -20,6 +20,7 @@ import Footer from './Footer';
 import logo_ps from './images/logo_ps.png';
 import { IconButton } from '@mui/material';
 import AccountMenu from './AccountMenu';
+import ChecklistIcon from '@mui/icons-material/Checklist';
 
 
 
@@ -48,11 +49,11 @@ export default function ClippedDrawer(props) {
                   </ListItem>
 
                   <ListItem disablePadding>
-                      <ListItemButton component={Link} to="/create" selected={"/create" === path}>
+                      <ListItemButton component={Link} to="/slicing" selected={"/slicing" === path}>
                         <ListItemIcon>
                                 <CalculateIcon />
                         </ListItemIcon>
-                        <ListItemText primary={"Create"} />
+                        <ListItemText primary={"Slicing"} />
                       </ListItemButton>
                   </ListItem>
 
@@ -62,6 +63,15 @@ export default function ClippedDrawer(props) {
                                 <EngineeringIcon />
                         </ListItemIcon>
                         <ListItemText primary={"Bending"} />
+                      </ListItemButton>
+                  </ListItem>
+
+                  <ListItem disablePadding>
+                      <ListItemButton component={Link} to="/tasks" selected={"/tasks" === path}>
+                        <ListItemIcon>
+                                <ChecklistIcon />
+                        </ListItemIcon>
+                        <ListItemText primary={"Tasks"} />
                       </ListItemButton>
                   </ListItem>
 
