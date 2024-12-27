@@ -19,8 +19,8 @@ function AccountMenu({ onLogout }) {
   const [userData, setUserData] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
+    const accessToken = sessionStorage.getItem('accessToken');
+    if (accessToken) {
       AxiosInstance.get('/user/')
         .then(res => {
           setUserData(res.data);

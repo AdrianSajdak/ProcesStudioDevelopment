@@ -119,7 +119,7 @@ export default function ClippedDrawer(props) {
               <MenuIcon />
             </IconButton>
 
-            <img src={logo_ps} alt="logo" style={{width: '50px', height: '25px'}} />
+            <img src={logoProcesStudio} alt="logo" style={{width: '50px', height: '25px'}} />
           </Box>
           
           <AccountMenu onLogout={onLogout} sx={{ marginLeft: 'auto' }} />
