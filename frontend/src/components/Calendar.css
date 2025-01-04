@@ -63,7 +63,7 @@
   .calendar-events-scrollable {
     margin-top: 0.5rem;
     font-size: 0.8rem;
-    max-height: 9rem;
+    max-height: 6rem;
     overflow-y: auto;
   }
   

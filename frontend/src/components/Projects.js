@@ -462,9 +462,7 @@ function Projects() {
                     </AccordionSummary>
                     <AccordionDetails>
                       <Typography>Status: {project.status}</Typography>
-                      <Typography>Miasto: {project.city || '-'}</Typography>
-                      <Typography>Ulica: {project.street || '-'}</Typography>
-                      <Typography>Postcode: {project.postcode || '-'}</Typography>
+                      <Typography>Adres: {project.city || '-'} {project.postcode || '-'}, ul. {project.street || '-'}</Typography>
                       <Typography>Powierzchnia: {project.area || '-'}</Typography>
                       <Typography>Komentarze: {project.comments || '-'}</Typography>
                     </AccordionDetails>
@@ -556,9 +554,7 @@ function Projects() {
                     {project.name} ({project.type})
                   </Typography>
                   <Typography>Status: {project.status}</Typography>
-                  <Typography>Miasto: {project.city || '-'}</Typography>
-                  <Typography>Ulica: {project.street || '-'}</Typography>
-                  <Typography>Postcode: {project.postcode || '-'}</Typography>
+                  <Typography>Adres: {project.city || '-'} {project.postcode || '-'}, ul. {project.street || '-'}</Typography>
                   <Typography>Powierzchnia: {project.area || '-'}</Typography>
                   <Typography>Komentarze: {project.comments || '-'}</Typography>
                 </Box>

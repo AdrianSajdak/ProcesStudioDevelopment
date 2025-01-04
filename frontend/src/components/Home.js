@@ -95,6 +95,22 @@ function Home() {
 
         <Button
           variant="contained"
+          onClick={() => navigate('/vacations')}
+          sx={{
+            width: '10rem',
+            height: '10rem',
+            borderRadius: '15%',
+            backgroundColor: 'violet.main',
+            color: '#fff',':hover': {
+              backgroundColor: 'violet.light',
+            },
+          }}
+        >
+          Urlopy
+        </Button>
+
+        <Button
+          variant="contained"
           onClick={() => navigate('/projects')}
           sx={{
             width: '10rem',

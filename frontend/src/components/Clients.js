@@ -94,7 +94,7 @@ function Clients() {
       }}
     >
       <Typography variant="h4" align="center" sx={{ mb: 2 }}>
-        Klienci
+        Panel Klientów
       </Typography>
 
       <Tabs

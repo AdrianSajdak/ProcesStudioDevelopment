@@ -88,7 +88,7 @@ function Users() {
       }}
     >
       <Typography variant="h4" align="center" sx={{ mb: 2 }}>
-        Pracownicy
+        Panel Pracowników
       </Typography>
 
       <Tabs

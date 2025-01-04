@@ -19,6 +19,7 @@ import ChecklistIcon from '@mui/icons-material/Checklist';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import InfoIcon from '@mui/icons-material/Info';
 import AccountMenu from './AccountMenu';
+import WorkOffIcon from '@mui/icons-material/WorkOff';
 import Footer from './Footer';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -124,6 +125,35 @@ export default function ClippedDrawer(props) {
                 <ChecklistIcon />
               </ListItemIcon>
               <ListItemText primary="Zadania" />
+            </ListItemButton>
+          </ListItem>
+
+          <ListItem disablePadding>
+            <ListItemButton
+              component={Link}
+              to="/vacations"
+              selected={"/vacations" === path}
+              sx={{
+                mb: 1,
+                mx: 1,
+                borderRadius: 1,
+                color: 'text.primary',
+                '&.Mui-selected': {
+                  backgroundColor: 'violet.main',
+                  color: '#fff',
+                  '& .MuiListItemIcon-root': {
+                    color: '#fff',
+                  },
+                },
+                '&:hover': {
+                  backgroundColor: 'violet.dark',
+                },
+              }}
+            >
+              <ListItemIcon sx={{ color: 'inherit' }}>
+                <WorkOffIcon />
+              </ListItemIcon>
+              <ListItemText primary="Urlopy" />
             </ListItemButton>
           </ListItem>
 

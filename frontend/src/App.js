@@ -5,13 +5,13 @@ import Home from './components/Home';
 import About from './components/About';
 import NavBar from './components/NavBar';
 import Login from './components/Login';
-import Register from './components/Register';
 import Profile from './components/Profile';
 import Clients from './components/Clients';
 import Users from './components/Users';
 import Projects from './components/Projects';
 import Tasks from './components/Tasks';
 import WymiarowanieZbrojenia from './components/WymiarowanieZbrojenia';
+import Vacations from './components/Vacations';
 import AxiosInstance from './Axios';
 
 import { useState, useEffect } from 'react';
@@ -46,8 +46,7 @@ function App() {
         })
         .catch((error) => {
           console.error('Error fetching user data:', error);
-          // jeśli byłby błąd autoryzacji, można usunąć tokeny i cofnąć do logowania
-          // handleLogout();
+          handleLogout();
         });
     }
   }, [accessToken]);
@@ -59,7 +58,6 @@ function App() {
           <CssBaseline />
           <Routes>
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
-            <Route path="/register" element={<Register />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
         </ThemeProvider>
@@ -92,6 +90,7 @@ function App() {
               <Route path="/projects" element={<Projects />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/profile" element={<Profile onLogout={handleLogout} />} />
+              <Route path="/vacations" element={<Vacations />} />
               <Route path="/clients"
                 element={ userRole === 'Boss' ? <Clients /> : <Navigate to="/" /> }
               />

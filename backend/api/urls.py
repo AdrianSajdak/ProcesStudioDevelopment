@@ -13,6 +13,7 @@ from .views import (
     PostViewSet,
     ClientViewSet,
     CurrentUserView,
+    VacationViewSet
 )
 
 router = DefaultRouter()
@@ -22,6 +23,7 @@ router.register('phases', PhaseViewSet, basename='phases')
 router.register('posts', PostViewSet, basename='posts')
 router.register('clients', ClientViewSet, basename='clients')
 router.register('users', UserViewSet, basename='users')
+router.register('vacations', VacationViewSet, basename='vacations')
 
 urlpatterns = [
     # REGISTER

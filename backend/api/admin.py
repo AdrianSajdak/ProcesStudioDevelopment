@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, Client, Project, Phase, Task, Post
+from .models import User, Client, Project, Phase, Task, Post, Vacation
 
 
 @admin.register(User)
@@ -77,7 +77,6 @@ class TaskAdmin(admin.ModelAdmin):
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    Employee = 'assigned_task__assigned_user__username'
     list_display = ('post_id', 'get_task', 'post_date', 'work_hours', 'get_employee')
     list_filter = ('post_date', 'assigned_task__assigned_user__username', 'assigned_task__name', 'assigned_task__assigned_project__name')
     search_fields = ('assigned_task__name', 'assigned_task__assigned_user__username', 'assigned_task__assigned_project__name')
@@ -92,4 +91,21 @@ class PostAdmin(admin.ModelAdmin):
         return obj.assigned_task.name
     get_task.short_description = 'Task'
     get_task.admin_order_field = 'assigned_task__name'
+
+@admin.register(Vacation)
+class VacationAdmin(admin.ModelAdmin):
+    list_display = ('vacation_id', 'get_employee', 'get_vacation_date')
+    list_filter = ('vacation_date', 'assigned_user__username')
+    search_fields = ('assigned_user__username', 'vacation_date')
+    ordering = ('assigned_user__username', 'vacation_date',)
+
+    def get_employee(self, obj):
+        return obj.assigned_user.username
+    get_employee.short_description = 'Employee'
+    get_employee.admin_order_field = 'assigned_user__username'
+
+    def get_vacation_date(self, obj):
+        return f"{obj.vacation_date} ({obj.duration}h)"
+    get_vacation_date.short_description = 'Vacation Date'
+    get_vacation_date.admin_order_field = 'vacation_date'
 

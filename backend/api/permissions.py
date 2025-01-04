@@ -44,6 +44,12 @@ class RolePermissions:
             'can_create_clients': True,
             'can_edit_clients': True,
             'can_delete_clients': False,
+            # VACATIONS
+            'can_view_all_vacations': True,
+            'can_view_own_vacations': True,
+            'can_create_vacations': True,
+            'can_edit_vacations': True,
+            'can_delete_vacations': False,
         },
         'Employee': {
             # PROJECTS
@@ -78,6 +84,12 @@ class RolePermissions:
             'can_create_clients': False,
             'can_edit_clients': False,
             'can_delete_clients': False,
+            # VACATIONS
+            'can_view_all_vacations': False,
+            'can_view_own_vacations': True,
+            'can_create_vacations': False,
+            'can_edit_vacations': False,
+            'can_delete_vacations': False,
         }
     }
 
@@ -115,4 +127,9 @@ class RolePermissions:
             'can_create_clients': False,
             'can_edit_clients': False,
             'can_delete_clients': False,
+            # VACATIONS
+            'can_view_all_vacations': False,
+            'can_create_vacations': False,
+            'can_edit_vacations': False,
+            'can_delete_vacations': False,
         })

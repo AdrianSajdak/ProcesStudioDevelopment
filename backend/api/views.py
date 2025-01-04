@@ -5,7 +5,7 @@ import uuid
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
 
-from .models import User, Project, Phase, Task, Post, Client
+from .models import User, Project, Phase, Task, Post, Client, Vacation
 from .serializers import (
     RegisterSerializer,
     UserSerializer,
@@ -13,7 +13,8 @@ from .serializers import (
     PhaseSerializer,
     TaskSerializer,
     PostSerializer,
-    ClientSerializer
+    ClientSerializer,
+    VacationSerializer
 )
 from .permissions import IsBossUser, RolePermissions
 
@@ -53,11 +54,11 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     
     def get_queryset(self):
-        user = self.request.user
-        if user.role == 'Boss':
-            return User.objects.all()
-        else:
-            return User.objects.filter(pk=user.pk)
+        #jeżęli uprawnienia na false to zwraca zalogowanego użytkowniak tylko
+        perms = RolePermissions.get_permissions_for_role(self.request.user.role)
+        if not perms['can_view_users']:
+            return User.objects.filter(pk=self.request.user.pk)
+        return User.objects.all()
 
     def get_object(self):
         if self.action in ['retrieve', 'update', 'partial_update', 'destroy']:
@@ -496,14 +497,27 @@ class ClientViewSet(viewsets.ModelViewSet):
             )
         return super().create(request, *args, **kwargs)
     
-    def update(self, request, pk=None):
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+
         perms = RolePermissions.get_permissions_for_role(request.user.role)
         if not perms.get('can_edit_clients', False):
             return Response(
                 {"detail": "You don't have permissions to edit clients."},
                 status=status.HTTP_403_FORBIDDEN
             )
-        return super().update(request, pk)
+
+        return super().update(request, *args, partial=partial, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        perms = RolePermissions.get_permissions_for_role(request.user.role)
+        if not perms.get('can_edit_clients', False):
+            return Response(
+                {"detail": "You don't have permissions to edit clients."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        return super().partial_update(request, *args, **kwargs)
     
     def destroy(self, request, pk=None):
         perms = RolePermissions.get_permissions_for_role(request.user.role)
@@ -522,3 +536,59 @@ class ClientViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         return super().retrieve(request, pk)
+    
+
+# ------------------ VACATION VIEWS ------------------
+class VacationViewSet(viewsets.ModelViewSet):
+    """
+    VIEWSET FOR VACATIONS (CRUD OPERATIONS)
+    """
+    serializer_class = VacationSerializer
+    queryset = Vacation.objects.all()
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        perms = RolePermissions.get_permissions_for_role(self.request.user.role)
+        if not perms.get('can_view_all_vacations', False):
+            return Vacation.objects.filter(assigned_user=self.request.user)
+        return Vacation.objects.all()
+        
+    def create(self, request, *args, **kwargs):
+        perms = RolePermissions.get_permissions_for_role(request.user.role)
+        if not perms.get('can_create_vacations', False):
+            return Response(
+                {"detail": "You don't have permissions to create vacations."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().create(request, *args, **kwargs)
+    
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+
+        perms = RolePermissions.get_permissions_for_role(request.user.role)
+        if not perms.get('can_edit_vacations', False):
+            return Response(
+                {"detail": "You don't have permissions to edit vacations."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        return super().update(request, *args, partial=partial, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        perms = RolePermissions.get_permissions_for_role(request.user.role)
+        if not perms.get('can_edit_vacations', False):
+            return Response(
+                {"detail": "You don't have permissions to edit vacations."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        return super().partial_update(request, *args, **kwargs)
+    
+    def destroy(self, request, pk=None):
+        perms = RolePermissions.get_permissions_for_role(request.user.role)
+        if not perms.get('can_delete_vacations', False):
+            return Response(
+                {"detail": "You don't have permissions to delete vacations."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().destroy(request, pk)

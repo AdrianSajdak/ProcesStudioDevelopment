@@ -28,7 +28,9 @@ class User(AbstractUser):
     USERNAME_FIELD = 'username'
 
     def __str__(self):
-        return f"{self.username} ({self.get_full_name()})"
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name} ({self.username})"
+        return f"{self.username}"
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -199,3 +201,16 @@ class Post(models.Model):
         )['work_hours__sum'] or 0.0
         task.total_hours = total
         task.save()
+
+class Vacation(models.Model):
+    """
+    VACATION MODEL FOR STORING EMPLOYEES VACATIONS
+    """
+    vacation_id = models.AutoField(primary_key=True)
+    assigned_user = models.ForeignKey(User, on_delete=models.CASCADE)                       # user_id
+    vacation_date = models.DateField()
+    duration = models.DecimalField(max_digits=4, decimal_places=1, default=8)
+    comments = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Vacation for {self.assigned_user.username}. Date: {self.vacation_date}, Duration: {self.duration}h"
