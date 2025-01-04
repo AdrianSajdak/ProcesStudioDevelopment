@@ -35,6 +35,7 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(',')
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -81,7 +82,6 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
 }
-
 
 WSGI_APPLICATION = 'processtudio.wsgi.application'
 
@@ -151,15 +151,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS').split(',')
 
-
 from datetime import timedelta
 
 SIMPLE_JWT = {
-   'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-   'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-   'ROTATE_REFRESH_TOKENS': False,                 
-   'BLACKLIST_AFTER_ROTATION': True,       
-   'ALGORITHM': 'HS256',              
-   'SIGNING_KEY': SECRET_KEY,
-   'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'user_id',      # <- Nazwa pola z modelem
+    'USER_ID_CLAIM': 'user_id',      # <- Nazwa claimu w JWT
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,                 
+    'BLACKLIST_AFTER_ROTATION': True,       
+    'ALGORITHM': 'HS256',              
+    'SIGNING_KEY': SECRET_KEY,
+    'AUTH_HEADER_TYPES': ('Bearer',),
 }

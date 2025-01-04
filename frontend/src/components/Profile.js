@@ -1,19 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Avatar, Button, TextField } from '@mui/material';
-import AccountCircle from '@mui/icons-material/AccountCircle';
-import { pink } from '@mui/material/colors';
+import {
+  Box,
+  Typography,
+  Avatar,
+  Button,
+  TextField
+} from '@mui/material';
+
 import AxiosInstance from '../Axios';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import IconButton from '@mui/material/IconButton';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+
+import { useTheme } from '@mui/material/styles';
 
 function Profile({ onLogout }) {
+  const theme = useTheme();
+
   const [userData, setUserData] = useState(null);
   const [profilePicFile, setProfilePicFile] = useState(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
 
+  // --- DIALOG ZMIANY HASŁA ---
+  const [changePassDialogOpen, setChangePassDialogOpen] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  // do wyświetlenia komunikatów
+  const [passwordChangeError, setPasswordChangeError] = useState('');
+  const [passwordChangeSuccess, setPasswordChangeSuccess] = useState('');
+
   useEffect(() => {
-    AxiosInstance.get('/user/')
+    AxiosInstance.get('/users/me/')
       .then(response => {
         setUserData(response.data);
         setFirstName(response.data.first_name || '');
@@ -25,40 +47,74 @@ function Profile({ onLogout }) {
   }, []);
 
   const handleFileChange = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
+    if (e.target.files && e.target.files[0]) {
       setProfilePicFile(e.target.files[0]);
     }
   };
 
   const handleSave = () => {
     const formData = new FormData();
+
     if (profilePicFile) {
       formData.append('profile_picture', profilePicFile);
     }
-    formData.append('first_name', firstName);
-    formData.append('last_name', lastName);
+    if (firstName) {
+      formData.append('first_name', firstName);
+    }
+    if (lastName) {
+      formData.append('last_name', lastName);
+    }
 
-    AxiosInstance.post('/user/', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+    AxiosInstance.post('/users/upload_profile_picture/', formData)
+    .then(response => {
+      setUserData(response.data);
+      setFirstName(response.data.first_name || '');
+      setLastName(response.data.last_name || '');
+      alert('Profil zaktualizowano poprawnie!');
     })
-      .then(response => {
-        setUserData(response.data);
-        alert('Profile updated successfully!');
-      })
-      .catch(error => {
-        console.error("Error updating profile:", error);
-        if (error.response && error.response.data.error) {
-          alert(error.response.data.error);
-        } else {
-          alert('Error updating profile.');
-        }
-      });
+    .catch(error => {
+      console.error("Error updating profile:", error);
+      alert('Błąd przy aktualizacji profilu.');
+    });
   };
 
   const handleLogoutClick = () => {
     onLogout();
+  };
+
+  const handleChangePasswordOpen = () => {
+    setOldPassword('');
+    setNewPassword('');
+    setConfirmNewPassword('');
+    setPasswordChangeError('');
+    setPasswordChangeSuccess('');
+    setChangePassDialogOpen(true);
+  };
+
+  const handleChangePasswordClose = () => {
+    setChangePassDialogOpen(false);
+  };
+
+  const handleChangePasswordConfirm = () => {
+    if (newPassword !== confirmNewPassword) {
+      setPasswordChangeError('Hasła nie są identyczne.');
+      setPasswordChangeSuccess('');
+      return;
+    }
+
+    AxiosInstance.post('/users/change_password/', {
+      old_password: oldPassword,
+      new_password: newPassword,
+    })
+      .then((res) => {
+        setPasswordChangeSuccess('Hasło zostało zmienione pomyślnie!');
+        setPasswordChangeError('');
+      })
+      .catch((err) => {
+        console.error('Error changing password:', err);
+        setPasswordChangeError('Zmiana hasła się nie udała.');
+        setPasswordChangeSuccess('');
+      });
   };
 
   if (!userData) {
@@ -70,87 +126,167 @@ function Profile({ onLogout }) {
     : null;
 
   return (
-    <Box sx={{
+    <Box
+      sx={{
+        backgroundColor: theme.palette.background.paper,
+        color: theme.palette.text.primary,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         mt: 5,
-        gap: 2
-    }}>
-    <Box sx={{ position: 'relative' }}>
+        gap: 2,
+        p: 3,
+        borderRadius: 1,
+        boxShadow: 3,
+        maxWidth: 500,
+        margin: '0 auto',
+      }}
+    >
+      <Box sx={{ position: 'relative' }}>
         {profilePictureUrl ? (
-            <Avatar
+          <Avatar
             src={profilePictureUrl}
-            sx={{ width: 150, height: 150, bgcolor: pink[500] }}
-            />
+            sx={{
+              width: 150,
+              height: 150,
+              bgcolor: 'violet.light',
+            }}
+          />
         ) : (
-            <Avatar sx={{ width: 150, height: 150, bgcolor: pink[500] }}>
-            <AccountCircle sx={{ fontSize: 80 }} />
-            </Avatar>
+          <Avatar
+            sx={{
+              width: 150,
+              height: 150,
+              bgcolor: 'violet.light',
+            }}
+          />
         )}
 
         <IconButton
-            component="label"
-            sx={{
-                position: 'absolute',
-                bottom: 0,
-                right: 0,
-                bgcolor: 'white',
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                '&:hover': { bgcolor: 'grey.200' }
-            }}
-            >
-            <FileUploadIcon />
-            <input 
-                type="file" 
-                hidden 
-                onChange={handleFileChange} 
-                accept="image/jpeg,image/png" 
-            />
+          component="label"
+          sx={{
+            position: 'absolute',
+            bottom: 0,
+            right: 0,
+            bgcolor: '##636262',
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            '&:hover': { bgcolor: '#8a8888' },
+          }}
+        >
+          <FileUploadIcon />
+          <input
+            type="file"
+            hidden
+            onChange={handleFileChange}
+            accept="image/jpeg,image/png"
+          />
         </IconButton>
-    </Box>      
+      </Box>
 
-        <TextField
-            label="Imię"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            fullWidth
-            sx={{ maxWidth: 300 }}
-        />
-        <TextField
-            label="Nazwisko"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            fullWidth
-            sx={{ maxWidth: 300 }}
-        />
+      <TextField
+        label="Imię"
+        value={firstName}
+        onChange={(e) => setFirstName(e.target.value)}
+        fullWidth
+        sx={{ maxWidth: 300 }}
+      />
+      <TextField
+        label="Nazwisko"
+        value={lastName}
+        onChange={(e) => setLastName(e.target.value)}
+        fullWidth
+        sx={{ maxWidth: 300 }}
+      />
 
-        <TextField
-            label="Email"
-            value={userData.email}
-            fullWidth
-            disabled
-            sx={{ maxWidth: 300 }}
-        />
-        <TextField
-            label="Rola"
-            value={userData.role}
-            fullWidth
-            disabled
-            sx={{ maxWidth: 300 }}
-        />
+      <TextField
+        label="Email"
+        value={userData.email}
+        fullWidth
+        disabled
+        sx={{ maxWidth: 300 }}
+      />
+      <TextField
+        label="Rola"
+        value={userData.role}
+        fullWidth
+        disabled
+        sx={{ maxWidth: 300 }}
+      />
 
-        <Button variant="contained" color="primary" onClick={handleSave}>
-            Zapisz zmiany
-        </Button>
+      <Button
+        variant="contained"
+        onClick={handleSave}
+        sx={{
+          minWidth: 150,
+          backgroundColor: 'violet.main',
+          color: '#fff',
+          ':hover': {
+            backgroundColor: 'violet.light',
+          },
+        }}
+      >
+        Zapisz zmiany
+      </Button>
 
-        <Button variant="outlined" color="error" onClick={handleLogoutClick}>
-            Wyloguj
-        </Button>
+      <Button
+        variant="contained"
+        onClick={handleChangePasswordOpen}
+        sx={{
+          minWidth: 150,
+          backgroundColor: 'violet.main',
+          color: '#fff',
+          ':hover': {
+            backgroundColor: 'violet.light',
+          },
+        }}
+      >
+        Zmień hasło
+      </Button>
+
+      {/* DIALOG ZMIANY HASŁA */}
+      <Dialog open={changePassDialogOpen} onClose={handleChangePasswordClose}>
+        <DialogTitle sx={{textAlign: 'center'}}>Zmień hasło</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: '1rem' }}>
+          {passwordChangeError && (
+            <Typography color="error">{passwordChangeError}</Typography>
+          )}
+          {passwordChangeSuccess && (
+            <Typography sx={{ color: '#60f76d' }}>{passwordChangeSuccess}</Typography>
+          )}
+          <TextField
+            label="Aktualne hasło"
+            type="password"
+            value={oldPassword}
+            onChange={(e) => setOldPassword(e.target.value)}
+            autoFocus
+            margin="dense"
+          />
+          <TextField
+            label="Nowe hasło"
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+          <TextField
+            label="Potwierdź nowe hasło"
+            type="password"
+            value={confirmNewPassword}
+            onChange={(e) => setConfirmNewPassword(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleChangePasswordClose}>Anuluj</Button>
+          <Button onClick={handleChangePasswordConfirm}>Zmień</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Button variant="outlined" color="error" onClick={handleLogoutClick} sx={{ minWidth: 150 }}>
+        Wyloguj
+      </Button>
     </Box>
-    );
+  );
 }
 
 export default Profile;

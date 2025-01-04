@@ -2,8 +2,12 @@ import React, { useState } from 'react';
 import { Box, TextField, Button, Typography } from '@mui/material';
 import AxiosInstance from '../Axios';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '@mui/material/styles';
+import { alignProperty } from '@mui/material/styles/cssUtils';
 
 function Login({ onLogin }) {
+  const theme = useTheme();
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error] = useState('');
@@ -30,34 +34,60 @@ function Login({ onLogin }) {
   }
 
   return (
-    <Box 
-      component="form"
-      onSubmit={handleLogin}
+    <Box
       sx={{
-        width: '300px', 
-        margin: 'auto', 
-        marginTop: '100px', 
-        display: 'flex', 
-        flexDirection: 'column', 
-        gap: 2
+        backgroundColor: theme.palette.background.default,
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
       }}
     >
-      <Typography variant="h5" textAlign="center">Zaloguj się</Typography>
-      {error && <Typography color="error">{error}</Typography>}
-      <TextField 
-        label="Username" 
-        value={username} 
-        onChange={(e) => setUsername(e.target.value)}
-        required
-      />
-      <TextField 
-        label="Password" 
-        type="password"
-        value={password} 
-        onChange={(e) => setPassword(e.target.value)}
-        required
-      />
-      <Button variant="contained" type="submit">Zaloguj</Button>
+      <Box
+        component="form"
+        onSubmit={handleLogin}
+        sx={{
+          backgroundColor: theme.palette.background.paper,
+          color: theme.palette.text.primary,
+          width: '300px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          p: 3,
+          borderRadius: 5,
+          boxShadow: 3,
+        }}
+      >
+        <Typography variant="h5" textAlign="center">
+          Zaloguj się
+        </Typography>
+        {error && <Typography color="error">{error}</Typography>}
+        <TextField
+          label="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+          fullWidth
+        />
+        <TextField
+          label="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          fullWidth
+        />
+        <Button
+          variant="contained"
+          type="submit"
+          sx={{
+            backgroundColor: 'violet.main',
+            '&:hover': { backgroundColor: 'violet.light' },
+          }}
+        >
+          Zaloguj
+        </Button>
+      </Box>
     </Box>
   );
 }

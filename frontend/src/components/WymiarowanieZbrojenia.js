@@ -15,6 +15,8 @@ import {
   FormControlLabel,
 } from '@mui/material';
 
+import { useTheme } from '@mui/material/styles';
+
 import {
   N,
   kN,
@@ -39,6 +41,8 @@ import {
 } from './utils/calculations';
 
 const WymiarowanieZbrojenia = () => {
+  const theme = useTheme();
+
   const [tabValue, setTabValue] = useState(0);
 
   const [klasaBetonu, setKlasaBetonu] = useState(betonData[2]);
@@ -122,13 +126,26 @@ const WymiarowanieZbrojenia = () => {
   }, [fctm, b, d]);
 
   return (
-    <Box  sx={{ maxWidth: 700, margin: '0 auto', p: 2 }}>
-      <Typography variant="h4" align='center'>Wymiarowanie zbrojenia</Typography>
+    <Box
+      sx={{
+        backgroundColor: theme.palette.background.default,
+        color: theme.palette.text.primary,
+        minHeight: '100vh',
+        p: 2,
+        maxWidth: 800,
+        margin: '0 auto',
+      }}
+    >
+      <Typography variant="h4" align="center">
+        Wymiarowanie zbrojenia
+      </Typography>
       <Tabs
         value={tabValue}
         onChange={handleTabChange}
         aria-label="tabs"
         sx={{ marginBottom: 2 }}
+        textColor="inherit"
+        TabIndicatorProps={{ style: { backgroundColor: theme.palette.violet.light } }}
       >
         <Tab label="Dane materiałowe" />
         <Tab label="Zginanie [SGN]" />
@@ -139,7 +156,9 @@ const WymiarowanieZbrojenia = () => {
       {/* Dane materiałowe */}
       {tabValue === 0 && (
         <Box p={2}>
-          <Typography variant="h5" align='center'>Zginanie [SGN]</Typography>
+          <Typography variant="h5" align="center">
+            Zginanie [SGN]
+          </Typography>
           <Box mt={2}>
             <FormControl fullWidth>
               <InputLabel>Klasa betonu</InputLabel>
@@ -156,7 +175,7 @@ const WymiarowanieZbrojenia = () => {
               </Select>
             </FormControl>
             <FormControl fullWidth sx={{ mt: 2 }}>
-              <InputLabel >Klasa stali</InputLabel>
+              <InputLabel>Klasa stali</InputLabel>
               <Select
                 value={klasaStali.value}
                 label="Klasa stali"
@@ -176,7 +195,9 @@ const WymiarowanieZbrojenia = () => {
       {/* Zginanie [SGN] */}
       {tabValue === 1 && (
         <Box p={2}>
-          <Typography variant="h5" align='center'>Zginanie [SGN]</Typography>
+          <Typography variant="h5" align="center">
+            Zginanie [SGN]
+          </Typography>
           <Box component="form" sx={{ mt: 2 }}>
             <TextField
               label="Moment obl. [kN*m]"
@@ -185,6 +206,7 @@ const WymiarowanieZbrojenia = () => {
               onChange={(e) => setMSd(parseFloat(e.target.value))}
               fullWidth
               InputProps={{ inputProps: { min: 0, step: 0.1 } }}
+              margin="normal"
             />
             <Divider sx={{ my: 2 }} />
             <TextField
@@ -193,6 +215,7 @@ const WymiarowanieZbrojenia = () => {
               value={h / cm}
               onChange={(e) => setH(parseFloat(e.target.value) * cm)}
               fullWidth
+              margin="normal"
             />
             <TextField
               label="Szerokość przekroju [cm]"
@@ -200,7 +223,7 @@ const WymiarowanieZbrojenia = () => {
               value={b / cm}
               onChange={(e) => setB(parseFloat(e.target.value) * cm)}
               fullWidth
-              sx={{ mt: 2 }}
+              margin="normal"
             />
             <Divider sx={{ my: 2 }} />
             <TextField
@@ -209,6 +232,7 @@ const WymiarowanieZbrojenia = () => {
               value={cnom / mm}
               onChange={(e) => setCnom(parseFloat(e.target.value) * mm)}
               fullWidth
+              margin="normal"
             />
             <FormControl fullWidth sx={{ mt: 2 }}>
               <InputLabel>Średnica zbrojenia fi [mm]</InputLabel>
@@ -217,22 +241,31 @@ const WymiarowanieZbrojenia = () => {
                 label="Średnica zbrojenia [mm]"
                 onChange={(e) => setFi(parseFloat(e.target.value) * mm)}
               >
-                {[8, 10, 12, 14, 16, 18, 20, 22, 25, 28, 30, 32, 36, 40].map((diameter) => (
-                  <MenuItem key={diameter} value={diameter}>
-                    {diameter}
-                  </MenuItem>
-                ))}
+                {[8, 10, 12, 14, 16, 18, 20, 22, 25, 28, 30, 32, 36, 40].map(
+                  (diameter) => (
+                    <MenuItem key={diameter} value={diameter}>
+                      {diameter}
+                    </MenuItem>
+                  )
+                )}
               </Select>
             </FormControl>
             <Divider sx={{ my: 2 }} />
             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-              <Button variant="contained" onClick={handleCalculateAsreq} >
+              <Button
+                variant="contained"
+                onClick={handleCalculateAsreq}
+                sx={{
+                  backgroundColor: 'violet.main',
+                  '&:hover': { backgroundColor: 'violet.light' },
+                }}
+              >
                 Oblicz
               </Button>
             </Box>
-            
+
             {resultAsreq && (
-              <Typography variant="body1" align='center' sx={{ mt: 2 }}>
+              <Typography variant="body1" align="center" sx={{ mt: 2 }}>
                 Wymagane pole zbrojenia na zginanie:{' '}
                 <strong>
                   {typeof resultAsreq === 'number'
@@ -248,9 +281,11 @@ const WymiarowanieZbrojenia = () => {
       {/* Zarysowanie [SGU] */}
       {tabValue === 2 && (
         <Box p={2}>
-          <Typography variant="h5" align='center'>Zarysowanie [SGU]</Typography>
+          <Typography variant="h5" align="center">
+            Zarysowanie [SGU]
+          </Typography>
           <Box component="form" sx={{ mt: 2 }}>
-            <Typography variant="body1" align='center'>
+            <Typography variant="body1" align="center">
               Moment rysujący Mcr = {(Mcr / (kN * m)).toFixed(2)} kNm
             </Typography>
             <Divider sx={{ my: 2 }} />
@@ -260,6 +295,7 @@ const WymiarowanieZbrojenia = () => {
               value={Mk}
               onChange={(e) => setMk(parseFloat(e.target.value))}
               fullWidth
+              margin="normal"
             />
             <Divider sx={{ my: 2 }} />
             <TextField
@@ -268,19 +304,24 @@ const WymiarowanieZbrojenia = () => {
               value={Asprov / (cm * cm)}
               onChange={(e) => setAsprov(parseFloat(e.target.value) * cm * cm)}
               fullWidth
+              margin="normal"
             />
-            <Box align='center'>
+            <Box align="center">
               <Button
                 variant="contained"
                 onClick={handleCalculateWk}
-                sx={{ mt: 2 }}
+                sx={{
+                  mt: 2,
+                  backgroundColor: 'violet.main',
+                  '&:hover': { backgroundColor: 'violet.light' },
+                }}
               >
                 Oblicz ryse
               </Button>
             </Box>
-            
+
             {wk !== 0 && (
-              <Typography variant="body1" align='center' sx={{ mt: 2 }}>
+              <Typography variant="body1" align="center" sx={{ mt: 2 }}>
                 Rozwarcie rysy dla przyjętego zbrojenia wk ={' '}
                 {(wk / mm).toFixed(2)} mm
               </Typography>
@@ -314,11 +355,15 @@ const WymiarowanieZbrojenia = () => {
                   </Select>
                 </FormControl>
 
-                <Box align='center'>
+                <Box align="center">
                   <Button
                     variant="contained"
                     onClick={handleCalculateAsreq3}
-                    sx={{ mt: 2 }}
+                    sx={{
+                      mt: 2,
+                      backgroundColor: 'violet.main',
+                      '&:hover': { backgroundColor: 'violet.light' },
+                    }}
                   >
                     Oblicz zbrojenie
                   </Button>

@@ -10,7 +10,6 @@ import { useEffect, useState } from 'react';
 import AxiosInstance from '../Axios';
 import IconButton from '@mui/material/IconButton';
 import Avatar from '@mui/material/Avatar';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
 
 function AccountMenu({ onLogout }) {
@@ -21,7 +20,7 @@ function AccountMenu({ onLogout }) {
   useEffect(() => {
     const accessToken = sessionStorage.getItem('accessToken');
     if (accessToken) {
-      AxiosInstance.get('/user/')
+      AxiosInstance.get('/users/me/')
         .then(res => {
           setUserData(res.data);
         })
@@ -64,14 +63,14 @@ function AccountMenu({ onLogout }) {
           profilePictureUrl ? (
             <Avatar src={profilePictureUrl} />
           ) : (
-            <Avatar>
-              <AccountCircleIcon />
-            </Avatar>
+            <Avatar
+              sx={{bgcolor: 'violet.light' }}
+            />
           )
         ) : (
-          <Avatar>
-            <AccountCircleIcon />
-          </Avatar>
+          <Avatar
+            sx={{bgcolor: 'violet.light' }}
+          />
         )}
       </IconButton>
       <Menu

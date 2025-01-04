@@ -1,20 +1,29 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+
 import Home from './components/Home';
 import About from './components/About';
 import NavBar from './components/NavBar';
-import WymiarowanieZbrojenia from './components/WymiarowanieZbrojenia';
-import Projects from './components/Projects';
 import Login from './components/Login';
+import Register from './components/Register';
 import Profile from './components/Profile';
+import Clients from './components/Clients';
+import Users from './components/Users';
+import Projects from './components/Projects';
 import Tasks from './components/Tasks';
-import Slicing from './components/Slicing';
-import { useState } from 'react';
+import WymiarowanieZbrojenia from './components/WymiarowanieZbrojenia';
+import AxiosInstance from './Axios';
+
+import { useState, useEffect } from 'react';
+import { ThemeProvider } from '@mui/material/styles';
+import { darkTheme } from './theme/colors';
+import { CssBaseline } from '@mui/material';
 
 
 function App() {
   const myWidth = 200;
   const [accessToken, setAccessToken] = useState(sessionStorage.getItem('accessToken'));
+  const [userData, setUserData] = useState(null);
 
   const handleLogin = (newAccessToken) => {
     setAccessToken(newAccessToken);
@@ -24,37 +33,77 @@ function App() {
     sessionStorage.removeItem('accessToken');
     sessionStorage.removeItem('refreshToken');
     setAccessToken(null);
+    setUserData(null);
   };
+
+  
+
+  useEffect(() => {
+    if (accessToken) {
+      AxiosInstance.get('/users/me/')
+        .then((response) => {
+          setUserData(response.data);
+        })
+        .catch((error) => {
+          console.error('Error fetching user data:', error);
+          // jeśli byłby błąd autoryzacji, można usunąć tokeny i cofnąć do logowania
+          // handleLogout();
+        });
+    }
+  }, [accessToken]);
 
   if (!accessToken) {
     return (
       <div className="App">
-        <Routes>
-          <Route path="/login" element={<Login onLogin={handleLogin} />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
+        <ThemeProvider theme={darkTheme}> 
+          <CssBaseline />
+          <Routes>
+            <Route path="/login" element={<Login onLogin={handleLogin} />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </ThemeProvider>
       </div>
     );
   }
 
+  if (!userData) {
+    return (
+      <div className="App">
+        <ThemeProvider theme={darkTheme}>
+          <p>Loading...</p>
+        </ThemeProvider>
+      </div>
+    );
+  }
+
+  const userRole = userData.role; 
+
   return (
     <div className="App">
-      <NavBar
-        drawerWidth={myWidth}
-        content={
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/bending" element={<WymiarowanieZbrojenia />} />
-            <Route path="/slicing" element={<Slicing />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="/profile" element={<Profile onLogout={handleLogout} />} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        }
-        onLogout={handleLogout}
-      />
+      <ThemeProvider theme={darkTheme}>
+        <NavBar
+          drawerWidth={myWidth}
+          content={
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/calculator" element={<WymiarowanieZbrojenia />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/tasks" element={<Tasks />} />
+              <Route path="/profile" element={<Profile onLogout={handleLogout} />} />
+              <Route path="/clients"
+                element={ userRole === 'Boss' ? <Clients /> : <Navigate to="/" /> }
+              />
+              <Route path="/users"
+                element={ userRole === 'Boss' ? <Users /> : <Navigate to="/" /> }
+              />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          }
+          onLogout={handleLogout}
+        />
+      </ThemeProvider>
     </div>
   );
 }

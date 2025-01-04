@@ -1,494 +1,1040 @@
-import React, { useState, useEffect } from 'react';
-import AxiosInstance from '../Axios';
+import React, { useEffect, useState } from 'react';
 import {
-  Tabs,
-  Tab,
   Box,
   Typography,
-  TextField,
+  Tabs,
+  Tab,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  IconButton,
+  Menu,
+  MenuItem,
   Button,
-  List,
-  ListItem,
-  ListItemText,
-  Collapse,
-  Divider,
-  Alert,
+  TextField,
+  Grid,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Select,
-  MenuItem
+  InputLabel,
+  FormControl,
+  MenuItem as MUIMenuItem
 } from '@mui/material';
-import {
-  ExpandLess,
-  ExpandMore,
-} from '@mui/icons-material';
 
-const Projects = () => {
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { useTheme } from '@mui/material/styles';
+import AxiosInstance from '../Axios';
+
+// Statusy faz
+const PHASE_STATUSES = ['OPEN', 'SUSPENDED', 'CLOSED'];
+const PHASE_TYPES = ['KONSULTACJE', 'PLANOWANIE', 'POPRAWKI', 'PODSUMOWANIE'];
+
+// Statusy projektów
+const PROJECT_STATUSES = ['OPEN', 'SUSPENDED', 'CLOSED'];
+const PROJECT_TYPES = [
+  'MIESZKANIOWY',
+  'BLOKOWY',
+  'DOM',
+  'HALA',
+  'PUBLICZNY',
+  'INNY',
+];
+
+function Projects() {
+  const theme = useTheme();
+
+  const [userRole, setUserRole] = useState(null);
   const [tabValue, setTabValue] = useState(0);
 
-  // ------------------------------
-  // STANY DO LISTY PROJEKTÓW
-  // ------------------------------
+  // ====== Projekty ======
   const [projects, setProjects] = useState([]);
-  const [expandedProject, setExpandedProject] = useState(null);
-
-  // ------------------------------
-  // STANY DO DODAWANIA PROJEKTU
-  // ------------------------------
-  const [newProject, setNewProject] = useState({
-    name: '',
-    start_date: '',
-    end_date: '',
-    comments: '',
-    status: '',
-  });
-
-  // ------------------------------
-  // STANY DO EDYCJI PROJEKTU
-  // ------------------------------
-  const [editProject, setEditProject] = useState({
-    id: '',
-    name: '',
-    start_date: '',
-    end_date: '',
-    comments: '',
-    status: '',
-  });
-  
   const [selectedProjectId, setSelectedProjectId] = useState(null);
-  
-  // ------------------------------
-  // INNE
-  // ------------------------------
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [capabilities, setCapabilities] = useState(null); 
 
-  // ------------------------------
-  // USE EFFECT - POBIERANIE DANYCH O UŻYTKOWNIKU
-  // ------------------------------
+  // Fazy (analogicznie do postsByTask -> phasesByProject)
+  const [phasesByProject, setPhasesByProject] = useState({});
+
+  // ====== Klienci ======
+  const [clients, setClients] = useState([]);
+
+  // ====== Dodaj Fazę ======
+  const [newPhaseAssignedProject, setNewPhaseAssignedProject] = useState('');
+  const [newPhaseName, setNewPhaseName] = useState('');
+  const [newPhasePrice, setNewPhasePrice] = useState('');
+  const [newPhaseType, setNewPhaseType] = useState('KONSULTACJE');
+  const [newPhaseStatus, setNewPhaseStatus] = useState('OPEN');
+  // Nowe pola
+  const [newPhaseStartDate, setNewPhaseStartDate] = useState('');
+  const [newPhaseEndDate, setNewPhaseEndDate] = useState('');
+
+  // ====== Dodaj Projekt ======
+  const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectType, setNewProjectType] = useState('DOM');
+  const [newProjectStatus, setNewProjectStatus] = useState('OPEN');
+  const [newProjectCity, setNewProjectCity] = useState('');
+  const [newProjectStreet, setNewProjectStreet] = useState('');
+  const [newProjectComments, setNewProjectComments] = useState('');
+  const [newProjectPostcode, setNewProjectPostcode] = useState('');
+  const [newProjectArea, setNewProjectArea] = useState('');
+  const [newProjectAssignedClient, setNewProjectAssignedClient] = useState('');
+
+  // ====== Edycja Projektu ======
+  const [menuAnchorProject, setMenuAnchorProject] = useState(null);
+  const [selectedProjectForMenu, setSelectedProjectForMenu] = useState(null);
+
+  const [openProjectDialog, setOpenProjectDialog] = useState(false);
+  const [editProjectName, setEditProjectName] = useState('');
+  const [editProjectType, setEditProjectType] = useState('DOM');
+  const [editProjectStatus, setEditProjectStatus] = useState('OPEN');
+  const [editProjectCity, setEditProjectCity] = useState('');
+  const [editProjectStreet, setEditProjectStreet] = useState('');
+  const [editProjectComments, setEditProjectComments] = useState('');
+  // Nowe pola
+  const [editProjectPostcode, setEditProjectPostcode] = useState('');
+  const [editProjectArea, setEditProjectArea] = useState('');
+
+  // ====== Edycja Faz ======
+  const [menuAnchorPhase, setMenuAnchorPhase] = useState(null);
+  const [selectedPhaseForMenu, setSelectedPhaseForMenu] = useState(null);
+
+  const [openPhaseDialog, setOpenPhaseDialog] = useState(false);
+  const [editPhaseName, setEditPhaseName] = useState('');
+  const [editPhasePrice, setEditPhasePrice] = useState('');
+  const [editPhaseType, setEditPhaseType] = useState('KONSULTACJE');
+  const [editPhaseStatus, setEditPhaseStatus] = useState('OPEN');
+  // Nowe pola
+  const [editPhaseStartDate, setEditPhaseStartDate] = useState('');
+  const [editPhaseEndDate, setEditPhaseEndDate] = useState('');
+
+  // ----------------- Load Data -----------------
   useEffect(() => {
-    fetchUserAndCapabilities();
+    AxiosInstance.get('/users/me/')
+      .then((res) => {
+        setUserRole(res.data.role);
+      })
+      .catch((err) => console.error('Error fetching user role:', err));
+
+    // Pobierz projekty
+    AxiosInstance.get('/projects/')
+      .then((res) => {
+        setProjects(res.data);
+      })
+      .catch((err) => console.error('Error fetching projects:', err));
+
+    AxiosInstance.get('/clients/')
+      .then((res) => {
+        setClients(res.data);
+      })
+      .catch((err) => console.error('Error fetching clients:', err));
   }, []);
 
-  useEffect(() => {
-    if (capabilities && capabilities.can_view_projects) {
-      fetchProjects();
-    }
-  }, [capabilities]);
-
-  // ------------------------------
-  // FUNKCJE - POBIERANIE
-  // ------------------------------
-  const fetchUserAndCapabilities = async () => {
-    try {
-      const response = await AxiosInstance.get('/user/');
-      setCapabilities(response.data.capabilities);
-    } catch (error) {
-      console.error("Nie udało się pobrać informacji o użytkowniku:", error);
-      setErrorMessage("Nie udało się pobrać informacji o użytkowniku. Upewnij się, że jesteś zalogowany.");
-    }
-  };
-
-  const fetchProjects = async () => {
-    setErrorMessage(null);
-    try {
-      const response = await AxiosInstance.get('/projects/');
-      setProjects(response.data);
-    } catch (error) {
-      console.error('Błąd podczas pobierania projektów:', error);
-      setErrorMessage('Nie udało się pobrać listy projektów. Spróbuj ponownie później.');
-    }
-  };
-
-  // ------------------------------
-  // FUNKCJE - OBSŁUGA TABÓW
-  // ------------------------------
+  // Obsługa zakładek
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
-    setErrorMessage(null);
   };
 
-  // ------------------------------
-  // FUNKCJE - LISTA PROJEKTÓW
-  // ------------------------------
-  const handleExpandClick = (projectId) => {
-    setExpandedProject(expandedProject === projectId ? null : projectId);
-  };
-
-  // ------------------------------
-  // FUNKCJE - DODAWANIE PROJEKTU
-  // ------------------------------
-  const handleInputChange = (event) => {
-    setNewProject({
-      ...newProject,
-      [event.target.name]: event.target.value,
-    });
-  };
-
-  const handleAddProject = async () => {
-    setErrorMessage(null);
-    try {
-      const response = await AxiosInstance.post('/projects/', newProject);
-      setProjects((prevProjects) => [...prevProjects, response.data]);
-      setNewProject({
-        name: '',
-        start_date: '',
-        end_date: '',
-        comments: '',
-        status: '',
-      });
-      setTabValue(0);
-    } catch (error) {
-      console.error('Błąd podczas dodawania projektu:', error.response ? error.response.data : error);
-      setErrorMessage('Nie udało się dodać projektu. Sprawdź dane i spróbuj ponownie.');
+  // ========== LISTA PROJEKTÓW (zakładka 0) ==========
+  const handleExpandProject = (projectId, expanded) => {
+    // Jeśli user nie jest Boss, w ogóle nie rozkłada akordeonu
+    if (userRole !== 'Boss') {
+      return;
     }
-  };
-
-  // ------------------------------
-  // FUNKCJE - EDYCJA / USUWANIE
-  // ------------------------------
-  const handleSelectProjectToEdit = (projectId) => {
-    const project = projects.find(p => p.id === projectId);
-
-    if (project) {
+    if (expanded) {
       setSelectedProjectId(projectId);
-      setEditProject({
-        id: project.id,
-        name: project.name || '',
-        start_date: project.start_date || '',
-        end_date: project.end_date || '',
-        comments: project.comments || '',
-        status: project.status || '',
-      });
-    }
-  };
-
-  const handleEditInputChange = (event) => {
-    setEditProject({
-      ...editProject,
-      [event.target.name]: event.target.value
-    });
-  };
-
-  const handleEditProject = async () => {
-    try {
-      const response = await AxiosInstance.put(`/projects/${editProject.id}/`, editProject);
-
-      setProjects((prev) => prev.map(p => p.id === editProject.id ? response.data : p));
-      setErrorMessage(null);
-      setTabValue(0);
-      setEditProject({
-        id: '',
-        name: '',
-        start_date: '',
-        end_date: '',
-        comments: '',
-        status: ''
-      });
+      AxiosInstance.get(`/phases/?assigned_project=${projectId}`)
+        .then((res) => {
+          setPhasesByProject((prev) => ({
+            ...prev,
+            [projectId]: res.data,
+          }));
+        })
+        .catch((err) => console.error('Error fetching phases:', err));
+    } else {
       setSelectedProjectId(null);
-    } catch (error) {
-      console.error("Błąd podczas edycji projektu:", error.response ? error.response.data : error);
-      setErrorMessage('Nie udało się edytować projektu. Sprawdź dane i spróbuj ponownie.');
     }
   };
 
-  const handleDeleteProject = async () => {
-    try {
-      await AxiosInstance.delete(`/projects/${editProject.id}/`);
-      setProjects((prev) => prev.filter(p => p.id !== editProject.id));
-      setErrorMessage(null);
-      setTabValue(0);
-      setEditProject({
-        id: '',
-        name: '',
-        start_date: '',
-        end_date: '',
-        comments: '',
-        status: ''
+  const getPhasesForProject = (projectId) => {
+    return phasesByProject[projectId] || [];
+  };
+
+  // ========== Menu w Projekcie (MoreVert) ==========
+  const handleProjectMenuClick = (event, project) => {
+    event.stopPropagation(); // aby nie otwierać akordeonu
+    setMenuAnchorProject(event.currentTarget);
+    setSelectedProjectForMenu(project);
+  };
+
+  const handleProjectMenuClose = () => {
+    setMenuAnchorProject(null);
+    // nie resetujemy selectedProjectForMenu, bo może być jeszcze potrzebne
+  };
+
+  const handleProjectEditClick = () => {
+    if (!selectedProjectForMenu) return;
+    const p = selectedProjectForMenu;
+
+    setEditProjectName(p.name || '');
+    setEditProjectType(p.type || 'DOM');
+    setEditProjectStatus(p.status || 'OPEN');
+    setEditProjectCity(p.city || '');
+    setEditProjectStreet(p.street || '');
+    setEditProjectComments(p.comments || '');
+    setEditProjectPostcode(p.postcode || '');
+    setEditProjectArea(p.area || '');
+
+    setOpenProjectDialog(true);
+    handleProjectMenuClose();
+  };
+
+  const handleSaveProjectChanges = () => {
+    if (!selectedProjectForMenu) return;
+
+    const body = {
+      name: editProjectName,
+      type: editProjectType,
+      status: editProjectStatus,
+      city: editProjectCity,
+      street: editProjectStreet,
+      comments: editProjectComments,
+      postcode: editProjectPostcode,
+      area: editProjectArea
+    };
+
+    AxiosInstance.patch(`/projects/${selectedProjectForMenu.project_id}/`, body)
+      .then(() => {
+        return AxiosInstance.get('/projects/');
+      })
+      .then((res) => {
+        setProjects(res.data);
+        setOpenProjectDialog(false);
+        setSelectedProjectForMenu(null);
+        alert('Projekt zaktualizowany pomyślnie!');
+      })
+      .catch((err) => {
+        console.error('Error updating project:', err?.response?.data || err);
+        alert(
+          'Nie udało się zaktualizować projektu: ' +
+            (err?.response?.data?.detail || '')
+        );
+        setSelectedProjectForMenu(null);
       });
-      setSelectedProjectId(null);
-    } catch (error) {
-      console.error("Błąd podczas usuwania projektu:", error.response ? error.response.data : error);
-      setErrorMessage('Nie udało się usunąć projektu. Spróbuj ponownie później.');
-    }
   };
 
-  // ------------------------------------------
-  // LOGIKA WYŚWIETLANIA W OPARCIU O UPRAWNIENIA
-  // ------------------------------------------
+  // ========== Menu w Fazie (MoreVert) ==========
+  const handlePhaseMenuClick = (event, phase) => {
+    event.stopPropagation();
+    setMenuAnchorPhase(event.currentTarget);
+    setSelectedPhaseForMenu(phase);
+  };
 
-  if (!capabilities) {
-    return <Typography>Wczytywanie danych użytkownika...</Typography>;
-  }
+  const handlePhaseMenuClose = () => {
+    setMenuAnchorPhase(null);
+  };
 
-  const canViewList = capabilities.can_view_projects === true;
+  // Edycja fazy
+  const handlePhaseEditClick = () => {
+    if (!selectedPhaseForMenu) return;
+    const ph = selectedPhaseForMenu;
 
-  const canCreate = capabilities.can_create_projects === true;
+    setEditPhaseName(ph.name || '');
+    setEditPhasePrice(ph.price || '');
+    setEditPhaseType(ph.type || 'KONSULTACJE');
+    setEditPhaseStatus(ph.status || 'OPEN');
+    // Nowe pola
+    setEditPhaseStartDate(ph.start_date || '');
+    setEditPhaseEndDate(ph.end_date || '');
 
-  const canEdit = capabilities.can_edit_projects === true;
+    setOpenPhaseDialog(true);
+    handlePhaseMenuClose();
+  };
 
-  const canDelete = capabilities.can_delete_projects === true;
+  const handleSavePhaseChanges = () => {
+    if (!selectedPhaseForMenu) return;
 
-  // Jeśli user nie ma w ogóle can_view_all_tasks, nie pokazujmy modułu Projects
-  if (!canViewList) {
-    return (
-      <Typography variant="body1" color="error">
-        Brak uprawnień do wyświetlania listy projektów (wymagane can_view_all_tasks).
-      </Typography>
-    );
-  }
+    const body = {
+      name: editPhaseName,
+      price: editPhasePrice,
+      type: editPhaseType,
+      status: editPhaseStatus,
+      start_date: editPhaseStartDate || null,
+      end_date: editPhaseEndDate || null
+    };
 
-  // Zakładki dynamicznie
-  // Tab 0: Lista projektów => widoczna, bo canViewList jest true
-  // Tab 1: Nowy projekt => jeśli canCreate jest true
-  // Tab 2: Edytuj/Usuń => jeśli canEdit lub canDelete jest true
-  let tabsToRender = [
-    <Tab key="list" label="Lista projektów" />,
-  ];
-  // Dodajemy "Nowy projekt" jeśli user ma can_create_projects
-  if (canCreate) {
-    tabsToRender.push(<Tab key="new" label="Nowy projekt" />);
-  }
-  // Dodajemy "Edytuj/Usuń projekt" jeśli ma canEdit lub canDelete
-  if (canEdit || canDelete) {
-    tabsToRender.push(<Tab key="editdelete" label="Edytuj/Usuń projekt" />);
-  }
+    const realProjectId =
+      selectedPhaseForMenu.assigned_project?.project_id ||
+      selectedPhaseForMenu.assigned_project;
 
-  // przy `tabValue` = 0 pokazywać listę,
-  // przy `tabValue` = 1 pokazywać nowy projekt
-  // przy `tabValue` = 2 pokazywać edycję
-  //
-  // "indeks -> widok".
-  // ALE: jeżeli user nie ma canCreate, to "Nowy projekt" w ogóle nie powstanie w tablicy.
-  // Wtedy tab z "Edytuj/Usuń" może być indexem 1 zamiast 2.
+    AxiosInstance.patch(`/phases/${selectedPhaseForMenu.phase_id}/`, body)
+      .then(() => {
+        return AxiosInstance.get(`/phases/?assigned_project=${realProjectId}`);
+      })
+      .then((res) => {
+        setPhasesByProject((prev) => ({
+          ...prev,
+          [realProjectId]: res.data,
+        }));
+        setOpenPhaseDialog(false);
+        setSelectedPhaseForMenu(null);
+        alert('Faza zaktualizowana pomyślnie!');
+      })
+      .catch((err) => {
+        console.error('Error updating phase:', err?.response?.data || err);
+        alert(
+          'Nie udało się zaktualizować fazy: ' +
+            (err?.response?.data?.detail || '')
+        );
+        setSelectedPhaseForMenu(null);
+      });
+  };
 
-  // Indeksy:
-  //   0: "Lista projektów"
-  //   1: "Nowy projekt" => TYLKO jeśli canCreate => wtedy "Edytuj/Usuń" przesuwa się na 2
-  //   2: "Edytuj/Usuń projekt" => TYLKO jeśli canEdit/canDelete
+  // ========== DODAJ FAZĘ (zakładka 1) ========== (tylko Boss)
+  const handleAddPhase = () => {
+    if (!newPhaseAssignedProject) {
+      alert('Wybierz projekt');
+      return;
+    }
+    if (!newPhaseName) {
+      alert('Podaj nazwę fazy');
+      return;
+    }
 
-  // Obliczamy 'index' -> "zakładka"
-  // - Jeżeli tabValue = 0 => Lista
-  // - Jeżeli jest canCreate i tabValue = 1 => Nowy projekt
-  // - jeśli canCreate = false, a (canEdit || canDelete) = true, to tabValue = 1 będzie Edytuj/Usuń
-  // Ewentualnie można zrobić "sekcję" dynamiczną.
+    const body = {
+      assigned_project_id: newPhaseAssignedProject,
+      name: newPhaseName,
+      price: newPhasePrice,
+      type: newPhaseType,
+      status: newPhaseStatus,
+      start_date: newPhaseStartDate || null,
+      end_date: newPhaseEndDate || null
+    };
 
-  // Proste podejście: zdefiniujemy tabIndex, który liczy, który tab jest który:
-  let listTabIndex = 0;
-  let newTabIndex = canCreate ? 1 : -1;
-  let editDeleteTabIndex = -1;
+    AxiosInstance.post('/phases/', body)
+      .then(() => {
+        alert('Faza dodana!');
+        // reset
+        setNewPhaseAssignedProject('');
+        setNewPhaseName('');
+        setNewPhasePrice('');
+        setNewPhaseType('KONSULTACJE');
+        setNewPhaseStatus('OPEN');
+        setNewPhaseStartDate('');
+        setNewPhaseEndDate('');
+      })
+      .catch((err) => {
+        console.error('Error creating phase:', err?.response?.data || err);
+        alert(
+          'Nie udało się dodać fazy: ' +
+            (err?.response?.data?.detail || '')
+        );
+      });
+  };
 
-  if (canCreate && (canEdit || canDelete)) {
-    editDeleteTabIndex = 2;
-  } else if (!canCreate && (canEdit || canDelete)) {
-    editDeleteTabIndex = 1;
+  // ========== DODAJ PROJEKT (zakładka 2) ========== (tylko Boss)
+  const handleAddProject = () => {
+    if (!newProjectName) {
+      alert('Podaj nazwę projektu');
+      return;
+    }
+
+    const body = {
+      name: newProjectName,
+      type: newProjectType,
+      status: newProjectStatus,
+      city: newProjectCity,
+      street: newProjectStreet,
+      comments: newProjectComments,
+      postcode: newProjectPostcode,
+      area: newProjectArea,
+      assigned_client_id: newProjectAssignedClient,
+    };
+
+    AxiosInstance.post('/projects/', body)
+      .then(() => {
+        alert('Projekt dodany!');
+        setNewProjectName('');
+        setNewProjectType('DOM');
+        setNewProjectStatus('OPEN');
+        setNewProjectCity('');
+        setNewProjectStreet('');
+        setNewProjectComments('');
+        setNewProjectPostcode('');
+        setNewProjectArea('');
+        setNewProjectAssignedClient('');
+        return AxiosInstance.get('/projects/');
+      })
+      .then((res) => {
+        setProjects(res.data);
+      })
+      .catch((err) => {
+        console.error('Error creating project:', err?.response?.data || err);
+        alert(
+          'Nie udało się dodać projektu. ' +
+            (err?.response?.data?.detail || 'Sprawdź uprawnienia.')
+        );
+      });
+  };
+
+  // Dynamika etykiet zakładek
+  // 0: Lista projektów
+  // 1: Dodaj Fazę (tylko Boss)
+  // 2: Dodaj Projekt (tylko Boss)
+  const tabLabels = ['Lista projektów'];
+  if (userRole === 'Boss') {
+    tabLabels.push('Dodaj Fazę');
+    tabLabels.push('Dodaj Projekt');
   }
 
   return (
-    <Box>
-      <Typography variant="h4">Projekty</Typography>
+    <Box
+      sx={{
+        backgroundColor: theme.palette.background.default,
+        color: theme.palette.text.primary,
+        minHeight: '100vh',
+        p: 2,
+      }}
+    >
+      <Typography variant="h4" textAlign="center" sx={{ mb: 2 }}>
+        Panel Projektów
+      </Typography>
 
-      {errorMessage && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {errorMessage}
-        </Alert>
-      )}
-
-      {/* Render TABS */}
-      <Tabs value={tabValue} onChange={handleTabChange} aria-label="tabs" sx={{ marginBottom: 2 }}>
-        {tabsToRender}
+      <Tabs
+        value={tabValue}
+        onChange={handleTabChange}
+        textColor="inherit"
+        sx={{ marginBottom: 2 }}
+        TabIndicatorProps={{ style: { backgroundColor: theme.palette.violet.light } }}
+      >
+        {tabLabels.map((label, idx) => (
+          <Tab key={idx} label={label} />
+        ))}
       </Tabs>
 
-      {/* --- ZAKŁADKA: Lista projektów --- */}
-      {tabValue === listTabIndex && (
-        <Box>
-          {projects.length === 0 ? (
-            <Typography variant="body1">Brak projektów do wyświetlenia.</Typography>
-          ) : (
-            <List>
-              {projects.map((project) => (
-                <React.Fragment key={project.id}>
-                  <ListItem button onClick={() => handleExpandClick(project.id)}>
-                    <ListItemText primary={project.name} />
-                    {expandedProject === project.id ? <ExpandLess /> : <ExpandMore />}
-                  </ListItem>
-                  <Collapse
-                    in={expandedProject === project.id}
-                    timeout="auto"
-                    unmountOnExit
+      {/* ZAKŁADKA 0: LISTA PROJEKTÓW */}
+      {tabValue === 0 && (
+        <Box sx={{ mt: 3 }}>
+          {/* Jeśli user to Boss -> 2 kolumny: Projekty (lewa), Fazy (prawa) */}
+          {userRole === 'Boss' ? (
+            <Grid container spacing={2} sx={{ minHeight: 500 }}>
+              {/* Lewa połowa: Projekty */}
+              <Grid item xs={12} md={6}>
+                <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
+                  Lista projektów
+                </Typography>
+                {projects.map((project) => (
+                  <Accordion
+                    key={project.project_id}
+                    onChange={(_, expanded) =>
+                      handleExpandProject(project.project_id, expanded)
+                    }
+                    sx={{ mb: 1 }}
                   >
-                    <Box sx={{ pl: 4, pb: 2 }}>
-                      <Typography variant="body1">
-                        <strong>Data rozpoczęcia:</strong> {project.start_date || '-'}
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          width: '100%',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            whiteSpace: 'pre-wrap',
+                            wordWrap: 'break-word',
+                            overflowWrap: 'anywhere',
+                          }}
+                        >
+                          {project.name} ({project.type})
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleProjectMenuClick(e, project);
+                          }}
+                        >
+                          <MoreVertIcon />
+                        </IconButton>
+                      </Box>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Typography>Status: {project.status}</Typography>
+                      <Typography>Miasto: {project.city || '-'}</Typography>
+                      <Typography>Ulica: {project.street || '-'}</Typography>
+                      <Typography>Postcode: {project.postcode || '-'}</Typography>
+                      <Typography>Powierzchnia: {project.area || '-'}</Typography>
+                      <Typography>Komentarze: {project.comments || '-'}</Typography>
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
+              </Grid>
+
+              {/* Prawa połowa: Fazy dla wybranego projektu */}
+              <Grid item xs={12} md={6}>
+                <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
+                  Fazy projektu
+                </Typography>
+                {selectedProjectId ? (
+                  <>
+                    {getPhasesForProject(selectedProjectId).length === 0 ? (
+                      <Typography
+                        variant="body1"
+                        sx={{ textAlign: 'center', mt: 2 }}
+                      >
+                        Brak faz dla tego projektu
                       </Typography>
-                      <Typography variant="body1">
-                        <strong>Data zakończenia:</strong> {project.end_date || '-'}
-                      </Typography>
-                      <Typography variant="body1">
-                        <strong>Komentarze:</strong> {project.comments || '-'}
-                      </Typography>
-                      <Typography variant="body1">
-                        <strong>Status:</strong> {project.status || '-'}
-                      </Typography>
-                      <Divider sx={{ my: 1 }} />
-                      <Typography variant="body2">
-                        <strong>Utworzono:</strong> {project.created || '-'}
-                      </Typography>
-                      <Typography variant="body2">
-                        <strong>Zmodyfikowano:</strong> {project.modified || '-'}
-                      </Typography>
-                    </Box>
-                  </Collapse>
-                </React.Fragment>
+                    ) : (
+                      getPhasesForProject(selectedProjectId).map((phase) => (
+                        <Accordion key={phase.phase_id} sx={{ mb: 1 }}>
+                          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                width: '100%',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                              }}
+                            >
+                              <Typography>
+                                {phase.name} ({phase.type})
+                              </Typography>
+                              <IconButton
+                                size="small"
+                                onClick={(ev) => {
+                                  ev.stopPropagation();
+                                  handlePhaseMenuClick(ev, phase);
+                                }}
+                              >
+                                <MoreVertIcon />
+                              </IconButton>
+                            </Box>
+                          </AccordionSummary>
+                          <AccordionDetails>
+                            <Typography>Cena: {phase.price || '-'}</Typography>
+                            <Typography>Status: {phase.status}</Typography>
+                            <Typography>
+                              Data rozpoczęcia: {phase.start_date || '-'}
+                            </Typography>
+                            <Typography>
+                              Data zakończenia: {phase.end_date || '-'}
+                            </Typography>
+                          </AccordionDetails>
+                        </Accordion>
+                      ))
+                    )}
+                  </>
+                ) : (
+                  <Typography
+                    variant="body1"
+                    sx={{ textAlign: 'center', mt: 2 }}
+                  >
+                    Wybierz projekt z listy po lewej, aby zobaczyć fazy
+                  </Typography>
+                )}
+              </Grid>
+            </Grid>
+          ) : (
+            // Jeśli user nie jest Boss -> pełna szerokość, bez faz
+            <Box sx={{ minHeight: 500 }}>
+              <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
+                Lista projektów
+              </Typography>
+              {projects.map((project) => (
+                <Box
+                  key={project.project_id}
+                  sx={{
+                    border: '1px solid #ccc',
+                    p: 2,
+                    mb: 2,
+                    borderRadius: '4px',
+                  }}
+                >
+                  <Typography variant="subtitle1">
+                    {project.name} ({project.type})
+                  </Typography>
+                  <Typography>Status: {project.status}</Typography>
+                  <Typography>Miasto: {project.city || '-'}</Typography>
+                  <Typography>Ulica: {project.street || '-'}</Typography>
+                  <Typography>Postcode: {project.postcode || '-'}</Typography>
+                  <Typography>Powierzchnia: {project.area || '-'}</Typography>
+                  <Typography>Komentarze: {project.comments || '-'}</Typography>
+                </Box>
               ))}
-            </List>
-          )}
-        </Box>
-      )}
-
-      {/* --- ZAKŁADKA: Nowy projekt --- */}
-      {newTabIndex !== -1 && tabValue === newTabIndex && canCreate && (
-        <Box component="form" sx={{ mt: 2 }}>
-          <TextField
-            label="Nazwa"
-            name="name"
-            value={newProject.name}
-            onChange={handleInputChange}
-            fullWidth
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="Data rozpoczęcia"
-            name="start_date"
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            value={newProject.start_date}
-            onChange={handleInputChange}
-            fullWidth
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="Data zakończenia"
-            name="end_date"
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            value={newProject.end_date}
-            onChange={handleInputChange}
-            fullWidth
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="Komentarze"
-            name="comments"
-            value={newProject.comments}
-            onChange={handleInputChange}
-            fullWidth
-            multiline
-            rows={4}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="Status"
-            name="status"
-            value={newProject.status}
-            onChange={handleInputChange}
-            fullWidth
-            sx={{ mb: 2 }}
-          />
-          <Button variant="contained" onClick={handleAddProject}>
-            Dodaj projekt
-          </Button>
-        </Box>
-      )}
-
-      {/* --- ZAKŁADKA: Edytuj/Usuń projekt --- */}
-      {editDeleteTabIndex !== -1 && tabValue === editDeleteTabIndex && (canEdit || canDelete) && (
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            Wybierz projekt do edycji lub usunięcia:
-          </Typography>
-
-          <Select
-            value={selectedProjectId || ''}
-            onChange={(e) => handleSelectProjectToEdit(e.target.value)}
-            fullWidth
-            sx={{ mb: 2 }}
-          >
-            <MenuItem value="">
-              <em>Wybierz projekt</em>
-            </MenuItem>
-            {projects.map((proj) => (
-              <MenuItem key={proj.id} value={proj.id}>
-                {proj.name}
-              </MenuItem>
-            ))}
-          </Select>
-
-          {selectedProjectId && (
-            <Box component="form" sx={{ mt: 2 }}>
-              <TextField
-                label="Nazwa"
-                name="name"
-                value={editProject.name}
-                onChange={handleEditInputChange}
-                fullWidth
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                label="Data rozpoczęcia"
-                name="start_date"
-                type="date"
-                InputLabelProps={{ shrink: true }}
-                value={editProject.start_date}
-                onChange={handleEditInputChange}
-                fullWidth
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                label="Data zakończenia"
-                name="end_date"
-                type="date"
-                InputLabelProps={{ shrink: true }}
-                value={editProject.end_date}
-                onChange={handleEditInputChange}
-                fullWidth
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                label="Komentarze"
-                name="comments"
-                value={editProject.comments}
-                onChange={handleEditInputChange}
-                fullWidth
-                multiline
-                rows={4}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                label="Status"
-                name="status"
-                value={editProject.status}
-                onChange={handleEditInputChange}
-                fullWidth
-                sx={{ mb: 2 }}
-              />
-
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                {canEdit && (
-                  <Button variant="contained" onClick={handleEditProject}>
-                    Zapisz zmiany
-                  </Button>
-                )}
-                {canDelete && (
-                  <Button variant="outlined" color="error" onClick={handleDeleteProject}>
-                    Usuń projekt
-                  </Button>
-                )}
-              </Box>
             </Box>
           )}
         </Box>
       )}
+
+      {/* ZAKŁADKA 1: DODAJ FAZĘ (tylko Boss) */}
+      {userRole === 'Boss' && tabValue === 1 && (
+        <Box sx={{ mt: 3, maxWidth: 600, margin: '0 auto' }}>
+          <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
+            Dodaj Fazę
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={12}>
+              <FormControl fullWidth>
+                <InputLabel>Projekt</InputLabel>
+                <Select
+                  value={newPhaseAssignedProject}
+                  label="Projekt"
+                  onChange={(e) => setNewPhaseAssignedProject(e.target.value)}
+                >
+                  {projects.map((p) => (
+                    <MUIMenuItem key={p.project_id} value={p.project_id}>
+                      {p.name}
+                    </MUIMenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={12}>
+              <TextField
+                label="Nazwa fazy"
+                value={newPhaseName}
+                onChange={(e) => setNewPhaseName(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} md={12}>
+              <TextField
+                label="Cena"
+                type="number"
+                value={newPhasePrice}
+                onChange={(e) => setNewPhasePrice(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Typ</InputLabel>
+                <Select
+                  value={newPhaseType}
+                  label="Typ"
+                  onChange={(e) => setNewPhaseType(e.target.value)}
+                >
+                  {PHASE_TYPES.map((t) => (
+                    <MUIMenuItem key={t} value={t}>
+                      {t}
+                    </MUIMenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={newPhaseStatus}
+                  label="Status"
+                  onChange={(e) => setNewPhaseStatus(e.target.value)}
+                >
+                  {PHASE_STATUSES.map((st) => (
+                    <MUIMenuItem key={st} value={st}>
+                      {st}
+                    </MUIMenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Data rozpoczęcia (YYYY-MM-DD)"
+                value={newPhaseStartDate}
+                onChange={(e) => setNewPhaseStartDate(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Data zakończenia (YYYY-MM-DD)"
+                value={newPhaseEndDate}
+                onChange={(e) => setNewPhaseEndDate(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+          </Grid>
+
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+            <Button
+              variant="contained"
+              sx={{
+                backgroundColor: 'violet.main',
+                '&:hover': { backgroundColor: 'violet.light' },
+              }}
+              onClick={handleAddPhase}
+            >
+              Dodaj Fazę
+            </Button>
+          </Box>
+        </Box>
+      )}
+
+      {/* ZAKŁADKA 2: DODAJ PROJEKT (tylko Boss) */}
+      {userRole === 'Boss' && tabValue === 2 && (
+        <Box sx={{ mt: 3, maxWidth: 600, margin: '0 auto' }}>
+          <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
+            Dodaj Projekt
+          </Typography>
+
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                label="Nazwa projektu"
+                value={newProjectName}
+                onChange={(e) => setNewProjectName(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel>Klient</InputLabel>
+                <Select
+                  value={newProjectAssignedClient}
+                  label="Klient"
+                  onChange={(e) => setNewProjectAssignedClient(e.target.value)}
+                >
+                  {clients.map((c) => (
+                    <MenuItem key={c.client_id} value={c.client_id}>
+                      {c.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Typ</InputLabel>
+                <Select
+                  value={newProjectType}
+                  label="Typ"
+                  onChange={(e) => setNewProjectType(e.target.value)}
+                >
+                  {PROJECT_TYPES.map((t) => (
+                    <MUIMenuItem key={t} value={t}>
+                      {t}
+                    </MUIMenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={newProjectStatus}
+                  label="Status"
+                  onChange={(e) => setNewProjectStatus(e.target.value)}
+                >
+                  {PROJECT_STATUSES.map((st) => (
+                    <MUIMenuItem key={st} value={st}>
+                      {st}
+                    </MUIMenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="Miasto"
+                value={newProjectCity}
+                onChange={(e) => setNewProjectCity(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+            
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="Kod pocztowy"
+                value={newProjectPostcode}
+                onChange={(e) => setNewProjectPostcode(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="Ulica"
+                value={newProjectStreet}
+                onChange={(e) => setNewProjectStreet(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+
+            
+            <Grid item xs={12} md={12}>
+              <TextField
+                label="Powierzchnia m2"
+                type="number"
+                value={newProjectArea}
+                onChange={(e) => setNewProjectArea(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                label="Komentarze"
+                value={newProjectComments}
+                onChange={(e) => setNewProjectComments(e.target.value)}
+                fullWidth
+                multiline
+                rows={3}
+                inputProps={{
+                  style: { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' },
+                }}
+              />
+            </Grid>
+          </Grid>
+
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+            <Button
+              variant="contained"
+              sx={{
+                backgroundColor: 'violet.main',
+                '&:hover': { backgroundColor: 'violet.light' },
+              }}
+              onClick={handleAddProject}
+            >
+              Dodaj Projekt
+            </Button>
+          </Box>
+        </Box>
+      )}
+
+      {/* Menu Projektu */}
+      <Menu
+        anchorEl={menuAnchorProject}
+        open={Boolean(menuAnchorProject)}
+        onClose={handleProjectMenuClose}
+      >
+        <MenuItem onClick={handleProjectEditClick}>Edytuj projekt</MenuItem>
+      </Menu>
+
+      {/* Dialog Edycji Projektu */}
+      <Dialog
+        open={openProjectDialog}
+        onClose={() => setOpenProjectDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{textAlign: 'center'}}>Edytuj Projekt</DialogTitle>
+        <DialogContent
+          sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: '1rem' }}>
+          <TextField
+            label="Nazwa projektu"
+            value={editProjectName}
+            onChange={(e) => setEditProjectName(e.target.value)}
+            fullWidth
+            autoFocus
+            margin="dense"
+          />
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Typ</InputLabel>
+                <Select
+                  value={editProjectType}
+                  label="Typ"
+                  onChange={(e) => setEditProjectType(e.target.value)}
+                >
+                  {PROJECT_TYPES.map((t) => (
+                    <MUIMenuItem key={t} value={t}>
+                      {t}
+                    </MUIMenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={editProjectStatus}
+                  label="Status"
+                  onChange={(e) => setEditProjectStatus(e.target.value)}
+                >
+                  {PROJECT_STATUSES.map((st) => (
+                    <MUIMenuItem key={st} value={st}>
+                      {st}
+                    </MUIMenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+          
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="Miasto"
+                value={editProjectCity}
+                onChange={(e) => setEditProjectCity(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="Kod pocztowy"
+                value={editProjectPostcode}
+                onChange={(e) => setEditProjectPostcode(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="Ulica"
+                value={editProjectStreet}
+                onChange={(e) => setEditProjectStreet(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+          </Grid>
+          
+          <TextField
+            label="Powierzchnia m2"
+            type="number"
+            value={editProjectArea}
+            onChange={(e) => setEditProjectArea(e.target.value)}
+            fullWidth
+          />
+          <TextField
+            label="Komentarze"
+            value={editProjectComments}
+            onChange={(e) => setEditProjectComments(e.target.value)}
+            multiline
+            rows={3}
+            fullWidth
+            inputProps={{
+              style: { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' },
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenProjectDialog(false)}>Anuluj</Button>
+          <Button
+            variant="contained"
+            sx={{
+              backgroundColor: 'violet.main',
+              '&:hover': { backgroundColor: 'violet.light' },
+            }}
+            onClick={handleSaveProjectChanges}
+          >
+            Zapisz
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Menu Faz */}
+      <Menu
+        anchorEl={menuAnchorPhase}
+        open={Boolean(menuAnchorPhase)}
+        onClose={handlePhaseMenuClose}
+      >
+        <MenuItem onClick={handlePhaseEditClick}>Edytuj fazę</MenuItem>
+      </Menu>
+
+      {/* Dialog Edycji Faz */}
+      <Dialog
+        open={openPhaseDialog}
+        onClose={() => setOpenPhaseDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{textAlign: 'center'}}>Edytuj Fazę</DialogTitle>
+        <DialogContent
+          sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: '1rem' }}
+        >
+          <TextField
+            label="Nazwa fazy"
+            value={editPhaseName}
+            onChange={(e) => setEditPhaseName(e.target.value)}
+            autoFocus
+            margin="dense"
+          />
+          <TextField
+            label="Cena"
+            type="number"
+            value={editPhasePrice}
+            onChange={(e) => setEditPhasePrice(e.target.value)}
+          />
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Typ</InputLabel>
+                <Select
+                  value={editPhaseType}
+                  label="Typ"
+                  onChange={(e) => setEditPhaseType(e.target.value)}
+                >
+                  {PHASE_TYPES.map((t) => (
+                    <MUIMenuItem key={t} value={t}>
+                      {t}
+                    </MUIMenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={editPhaseStatus}
+                  label="Status"
+                  onChange={(e) => setEditPhaseStatus(e.target.value)}
+                >
+                  {PHASE_STATUSES.map((st) => (
+                    <MUIMenuItem key={st} value={st}>
+                      {st}
+                    </MUIMenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+          
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Data rozpoczęcia (YYYY-MM-DD)"
+                value={editPhaseStartDate}
+                onChange={(e) => setEditPhaseStartDate(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Data zakończenia (YYYY-MM-DD)"
+                value={editPhaseEndDate}
+                onChange={(e) => setEditPhaseEndDate(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenPhaseDialog(false)}>Anuluj</Button>
+          <Button
+            variant="contained"
+            sx={{
+              backgroundColor: 'violet.main',
+              '&:hover': { backgroundColor: 'violet.light' },
+            }}
+            onClick={handleSavePhaseChanges}
+          >
+            Zapisz
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
-};
+}
 
 export default Projects;
