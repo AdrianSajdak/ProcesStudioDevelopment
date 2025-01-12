@@ -16,7 +16,7 @@ const Footer = () => {
             }}
         >
             <Typography variant="body2">
-                © 2024 Proces Studio. All rights reserved.
+                © {new Date().getFullYear()} Proces Studio. All rights reserved.
             </Typography>
         </Box>
     );

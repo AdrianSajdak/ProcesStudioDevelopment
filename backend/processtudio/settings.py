@@ -154,8 +154,8 @@ CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS').split(',')
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    'USER_ID_FIELD': 'user_id',      # <- Nazwa pola z modelem
-    'USER_ID_CLAIM': 'user_id',      # <- Nazwa claimu w JWT
+    'USER_ID_FIELD': 'user_id',
+    'USER_ID_CLAIM': 'user_id',
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': False,                 

@@ -12,27 +12,18 @@ import {
   isSameMonth,
   isSameDay,
 } from 'date-fns';
-import AxiosInstance from '../Axios';
 import './Calendar.css';
 
-const Calendar = forwardRef(({ onSelectDay, onEventClick, type = 'post' }, ref) => {
+// events: [{ id, type: 'post'|'vacation', date: '2023-01-01', data: {...} }, ...]
+// onEventClick(event), onEmptyDayClick(day, anchorEl)
+const Calendar = forwardRef(({ events = [], onEventClick, onEmptyDayClick }, ref) => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [events, setEvents] = useState([]);
 
-  const fetchEvents = () => {
-    const endpoint = type === 'vacation' ? '/vacations/' : '/posts/';
-    AxiosInstance.get(endpoint)
-      .then((res) => setEvents(res.data))
-      .catch((err) => console.error(`Error fetching ${type}s:`, err));
-  };
-
-  useEffect(() => {
-    fetchEvents();
-  }, [type]);
-
+  // Umożliwiamy Tasks.js wywołanie refreshEvents(),
   useImperativeHandle(ref, () => ({
     refreshEvents: () => {
-      fetchEvents();
+      // Nie robimy tu nic, bo i tak events przychodzi z props.
+      // Ewentualnie można w Tasks.js wywoływać setState i przekazywać w props events na nowo.
     },
   }));
 
@@ -57,23 +48,22 @@ const Calendar = forwardRef(({ onSelectDay, onEventClick, type = 'post' }, ref) 
   const calendarDays = generateCalendarDays();
 
   const getEventsForDay = (date) => {
-    return events.filter((event) => {
-      const eventDate = type === 'vacation' ? new Date(event.vacation_date) : new Date(event.post_date);
-      return isSameDay(eventDate, date);
+    return events.filter((ev) => {
+      return isSameDay(new Date(ev.date), date);
     });
   };
 
   const handleDayClick = (e, dayItem) => {
     e.stopPropagation();
-    if (onSelectDay) {
-      onSelectDay(dayItem);
+    if (onEmptyDayClick) {
+      onEmptyDayClick(dayItem, e.currentTarget);
     }
   };
 
   const handleEventClickLocal = (e, event) => {
     e.stopPropagation();
     if (onEventClick) {
-      onEventClick(e, event);
+      onEventClick(event);
     }
   };
 
@@ -103,21 +93,26 @@ const Calendar = forwardRef(({ onSelectDay, onEventClick, type = 'post' }, ref) 
               onClick={(e) => handleDayClick(e, dayItem)}
             >
               <div className="calendar-date">{format(dayItem, 'd')}</div>
-
               {dayEvents.length > 0 && (
                 <div className="calendar-events-scrollable">
-                  {dayEvents.map((event) => (
+                  {dayEvents.map((ev) => (
                     <div
-                      key={type === 'vacation' ? event.vacation_id : event.post_id}
-                      className={`calendar-event ${type === 'post' ? 'post' : 'vacation'}`}
-                      onClick={(e) => handleEventClickLocal(e, event)}
+                      key={ev.id}
+                      className={`calendar-event ${
+                        ev.type === 'vacation' ? 'vacation' : 'post'
+                      }`}
+                      onClick={(e) => handleEventClickLocal(e, ev)}
                     >
-                      <strong>
-                        {type === 'vacation'
-                          ? `Urlop (${event.assigned_user?.username})`
-                          : event.assigned_task?.name || 'Task'}
-                      </strong>{' '}
-                      — {type === 'vacation' ? `${event.duration}h` : `${event.work_hours}h`}
+                      {ev.type === 'vacation' ? (
+                        <>
+                          <strong>Urlop</strong> ({ev.data.assigned_user?.username})  
+                        </>
+                      ) : (
+                        <>
+                          <strong>{ev.data.assigned_task?.name || 'Post'}</strong>{' '}
+                          — {ev.data.work_hours}h
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>

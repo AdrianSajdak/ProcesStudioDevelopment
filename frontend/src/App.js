@@ -11,7 +11,7 @@ import Users from './components/Users';
 import Projects from './components/Projects';
 import Tasks from './components/Tasks';
 import WymiarowanieZbrojenia from './components/WymiarowanieZbrojenia';
-import Vacations from './components/Vacations';
+// import Vacations from './components/Vacations';
 import AxiosInstance from './Axios';
 
 import { useState, useEffect } from 'react';
@@ -90,7 +90,7 @@ function App() {
               <Route path="/projects" element={<Projects />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/profile" element={<Profile onLogout={handleLogout} />} />
-              <Route path="/vacations" element={<Vacations />} />
+              {/* <Route path="/vacations" element={<Vacations />} /> */}
               <Route path="/clients"
                 element={ userRole === 'Boss' ? <Clients /> : <Navigate to="/" /> }
               />

@@ -128,7 +128,7 @@ export default function ClippedDrawer(props) {
             </ListItemButton>
           </ListItem>
 
-          <ListItem disablePadding>
+          {/* <ListItem disablePadding>
             <ListItemButton
               component={Link}
               to="/vacations"
@@ -155,7 +155,7 @@ export default function ClippedDrawer(props) {
               </ListItemIcon>
               <ListItemText primary="Urlopy" />
             </ListItemButton>
-          </ListItem>
+          </ListItem> */}
 
           <ListItem disablePadding>
             <ListItemButton
@@ -286,7 +286,6 @@ export default function ClippedDrawer(props) {
   return (
     <Box sx={{ display: 'flex', backgroundColor: 'background.default' }}>
       <CssBaseline />
-      {/* AppBar w ciemnym kolorze, nieco innym niż Drawer */}
       <AppBar
         position="fixed"
         sx={{
@@ -322,7 +321,6 @@ export default function ClippedDrawer(props) {
         </Toolbar>
       </AppBar>
 
-      {/* Drawer - tło w ciemnym niebieskim z palety */}
       <Drawer
         variant="permanent"
         sx={{

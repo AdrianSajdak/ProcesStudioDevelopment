@@ -8,7 +8,6 @@ function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Pobieramy dane o zalogowanym użytkowniku
     AxiosInstance.get('/users/me/')
       .then((response) => {
         setUserData(response.data);
@@ -74,7 +73,7 @@ function Home() {
             },
           }}
         >
-          Calculator
+          Kalkulator
         </Button>
 
         <Button
@@ -90,23 +89,7 @@ function Home() {
             },
           }}
         >
-          Tasks
-        </Button>
-
-        <Button
-          variant="contained"
-          onClick={() => navigate('/vacations')}
-          sx={{
-            width: '10rem',
-            height: '10rem',
-            borderRadius: '15%',
-            backgroundColor: 'violet.main',
-            color: '#fff',':hover': {
-              backgroundColor: 'violet.light',
-            },
-          }}
-        >
-          Urlopy
+          Zadania
         </Button>
 
         <Button
@@ -122,7 +105,7 @@ function Home() {
             },
           }}
         >
-          Projects
+          Projekty
         </Button>
 
         {userRole === 'Boss' && (
@@ -140,7 +123,7 @@ function Home() {
                 },
               }}
             >
-              Clients
+              Klienci
             </Button>
             <Button
               variant="contained"
@@ -155,7 +138,7 @@ function Home() {
                 },
               }}
             >
-              Users
+              Pracownicy
             </Button>
         </>
       )}

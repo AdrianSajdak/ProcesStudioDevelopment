@@ -87,7 +87,7 @@ class RolePermissions:
             # VACATIONS
             'can_view_all_vacations': False,
             'can_view_own_vacations': True,
-            'can_create_vacations': False,
+            'can_create_vacations': True,
             'can_edit_vacations': False,
             'can_delete_vacations': False,
         }

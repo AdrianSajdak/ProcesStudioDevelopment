@@ -73,5 +73,14 @@
     padding: 2px 4px;
     border-radius: 3px;
     cursor: pointer;
+    color: #ffffff;
   }
-  
+
+  .calendar-event.vacation {
+    background-color: #244b8a;
+    margin-bottom: 2px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    cursor: pointer;
+    color: #ffffff;
+  }

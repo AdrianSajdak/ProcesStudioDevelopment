@@ -84,8 +84,8 @@ class PostAdmin(admin.ModelAdmin):
 
     def get_employee(self, obj):
         return obj.assigned_task.assigned_user.username
-    get_employee.short_description = 'Employee'  # Nazwa kolumny w panelu admina
-    get_employee.admin_order_field = 'assigned_task__assigned_user__username'  # Pozwala sortować po tym polu
+    get_employee.short_description = 'Employee'
+    get_employee.admin_order_field = 'assigned_task__assigned_user__username'
 
     def get_task(self, obj):
         return obj.assigned_task.name

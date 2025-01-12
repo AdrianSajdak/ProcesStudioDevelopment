@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 import uuid
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
+from datetime import datetime, timedelta
 
 from .models import User, Project, Phase, Task, Post, Client, Vacation
 from .serializers import (
@@ -54,7 +55,6 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     
     def get_queryset(self):
-        #jeżęli uprawnienia na false to zwraca zalogowanego użytkowniak tylko
         perms = RolePermissions.get_permissions_for_role(self.request.user.role)
         if not perms['can_view_users']:
             return User.objects.filter(pk=self.request.user.pk)
@@ -188,7 +188,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all()
 
     def get_queryset(self):
-        return Project.objects.filter(status__in=['OPEN', 'SUSPENDED'])
+        return Project.objects.all()
 
     def list(self, request, *args, **kwargs):
         perms = RolePermissions.get_permissions_for_role(request.user.role)
@@ -244,6 +244,16 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         return super().destroy(request, pk)
+    
+    def perform_update(self, serializer):
+        """
+        After updating the project, if the status is CLOSED,
+        close all phases and tasks that are not yet closed.
+        """
+        project = serializer.save()
+        if project.status == 'CLOSED':
+            Phase.objects.filter(assigned_project=project).exclude(status='CLOSED').update(status='CLOSED')
+            Task.objects.filter(assigned_project=project).exclude(status='CLOSED').update(status='CLOSED')
 
 
 # ------------------ PHASE VIEWS ------------------
@@ -335,12 +345,15 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         perms = RolePermissions.get_permissions_for_role(self.request.user.role)
+
+        one_year_ago = datetime.now().date() - timedelta(days=365)
+    
         if not perms.get('can_view_all_tasks', False):
             return Task.objects.filter(
                 assigned_user=self.request.user,
-                status__in=['OPEN', 'SUSPENDED']
+                created_date__gte=one_year_ago
             )
-        return Task.objects.filter(status__in=['OPEN', 'SUSPENDED'])
+        return Task.objects.filter(created_date__gte=one_year_ago)
     
     def create(self, request, *args, **kwargs):
         perms = RolePermissions.get_permissions_for_role(request.user.role)
@@ -395,6 +408,16 @@ class TaskViewSet(viewsets.ModelViewSet):
                     "detail": "You don't have permissions to view this task."
                     }, status=status.HTTP_403_FORBIDDEN)
         return super().retrieve(request, pk)
+    
+    def perform_update(self, serializer):
+        original_task = self.get_object()
+        original_status = original_task.status
+        
+        task = serializer.save()
+        
+        if original_status != 'CLOSED' and task.status == 'CLOSED':
+            task.end_date = datetime.now()
+            task.save()
 
 
 # ------------------ POST VIEWS ------------------
@@ -408,8 +431,11 @@ class PostViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         perms = RolePermissions.get_permissions_for_role(self.request.user.role)
+
+        one_year_ago = datetime.now().date() - timedelta(days=365)
+
         if perms.get('can_view_all_posts', False):
-            queryset = Post.objects.all()
+            queryset = Post.objects.filter(post_date__gte=one_year_ago)
 
             assigned_task_id = self.request.query_params.get('assigned_task', None)
             if assigned_task_id is not None:
@@ -417,7 +443,16 @@ class PostViewSet(viewsets.ModelViewSet):
 
             return queryset
         elif perms.get('can_view_own_posts', False):
-            return Post.objects.filter(assigned_task__assigned_user=self.request.user)
+            queryset = Post.objects.filter(
+                assigned_task__assigned_user=self.request.user,
+                post_date__gte=one_year_ago
+            )
+
+            assigned_task_id = self.request.query_params.get('assigned_task', None)
+            if assigned_task_id is not None:
+                queryset = queryset.filter(assigned_task_id=assigned_task_id)
+            
+            return queryset
         else:
             return Post.objects.none()
         
