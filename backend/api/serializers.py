@@ -179,7 +179,7 @@ class VacationSerializer(serializers.ModelSerializer):
         model = Vacation
         fields = [
             'vacation_id', 'assigned_user_id', 'assigned_user',
-            'vacation_date', 'duration', 'comments'
+            'vacation_date', 'duration', 'status','comments'
         ]
         read_only_fields = ['vacation_id']
 

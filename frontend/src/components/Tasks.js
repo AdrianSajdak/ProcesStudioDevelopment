@@ -29,10 +29,11 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useTheme } from '@mui/material/styles';
 import AxiosInstance from '../Axios';
 
-import Calendar from './Calendar';
+import Calendar from './Calendar'; // Upewnij się, że ścieżka do pliku Calendar.js jest poprawna
 import { format } from 'date-fns';
 
 const TASK_STATUSES = ['OPEN', 'SUSPENDED', 'CLOSED'];
+const VACATION_STATUSES = ['PENDING', 'CONFIRMED'];
 
 function Tasks() {
   const theme = useTheme();
@@ -42,47 +43,52 @@ function Tasks() {
 
   const [tabValue, setTabValue] = useState(0);
 
-  // -------------------- POSTY (kalendarz) --------------------
+  // -------------------- POSTY do kalendarza --------------------
   const [allPosts, setAllPosts] = useState([]);
 
   // -------------------- TASKI --------------------
   const [tasks, setTasks] = useState([]);
   const [expandedTaskId, setExpandedTaskId] = useState(null);
-
-  // -------------------- POSTY DLA ZAKŁADKI 0 --------------------
   const [postsByTask, setPostsByTask] = useState({});
 
   // -------------------- PROJEKTY I UŻYTKOWNICY --------------------
   const [projects, setProjects] = useState([]);
   const [users, setUsers] = useState([]);
 
-  // -------------------- FILTROWANIE TASKÓW --------------------
-  const [showClosed, setShowClosed] = useState(false);
+  // -------------------- FILTROWANIE (Lista Zadań) --------------------
+  const [showClosed, setShowClosed] = useState(false); 
   const [projectFilter, setProjectFilter] = useState('');
   const [userFilter, setUserFilter] = useState('');
 
-  // -------------------- DODAWANIE/EDYCJA POSTÓW --------------------
+  // -------------------- FILTROWANIE (KALENDARZ) --------------------
+  // a) checkbox, który chowa/pokazuje urlopy w kalendarzu
+  const [hideVacations, setHideVacations] = useState(false);
+
+  // b) Dla Bossa – filtr po użytkowniku (filtrowanie postów i urlopów wybranego usera)
+  const [calendarUserFilter, setCalendarUserFilter] = useState('');
+
+  // (opcjonalnie) Dla Bossa/Employee – można też dodać select do filtrowania Tasków w kalendarzu
+  const [calendarTaskFilter, setCalendarTaskFilter] = useState('');
+
+  // -------------------- DODAWANIE I EDYCJA POSTÓW --------------------
   const [openAddPostDialog, setOpenAddPostDialog] = useState(false);
   const [newPostAssignedTask, setNewPostAssignedTask] = useState('');
   const [newPostWorkHours, setNewPostWorkHours] = useState('');
   const [newPostComment, setNewPostComment] = useState('');
   const [selectedDate, setSelectedDate] = useState(null);
 
-  // -------------------- MENU W POŚCIE --------------------
+  // Menu i edycja postów
   const [menuAnchorPost, setMenuAnchorPost] = useState(null);
   const [selectedPostForMenu, setSelectedPostForMenu] = useState(null);
-
-  // -------------------- EDYCJA POSTÓW --------------------
   const [openPostDialog, setOpenPostDialog] = useState(false);
   const [editPostWorkHours, setEditPostWorkHours] = useState('');
   const [editPostComment, setEditPostComment] = useState('');
 
-  // -------------------- USUWANIE POSTÓW --------------------
+  // Usuwanie Postów
   const [openDeletePostDialog, setOpenDeletePostDialog] = useState(false);
-  const [deletePostChecked, setDeletePostChecked] = useState(false); // checkbox: potwierdzenie
-  // Gdy usuwamy post, będziemy korzystać z selectedPostForMenu
+  const [deletePostChecked, setDeletePostChecked] = useState(false);
 
-  // -------------------- INFORMACJE O POŚCIE (DIALOG) --------------------
+  // Dialog informacyjny o Poście
   const [openPostInfoDialog, setOpenPostInfoDialog] = useState(false);
   const [infoDialogData, setInfoDialogData] = useState(null);
 
@@ -117,15 +123,14 @@ function Tasks() {
   const [editVacationDuration, setEditVacationDuration] = useState('');
   const [editVacationComments, setEditVacationComments] = useState('');
 
+  // Dialog informacyjny o urlopie (z możliwością zatwierdzenia lub odrzucenia)
   const [openVacationInfoDialog, setOpenVacationInfoDialog] = useState(false);
   const [infoVacationDialogData, setInfoVacationDialogData] = useState(null);
 
-  // -------------------- REFS --------------------
+  // Ref do kalendarza
   const calendarRef = useRef(null);
 
-  // ---------------------------------------------
-  // ŁADOWANIE DANYCH
-  // ---------------------------------------------
+  // ========================= ŁADOWANIE DANYCH =========================
   useEffect(() => {
     fetchCurrentUser();
     fetchTasks();
@@ -140,107 +145,92 @@ function Tasks() {
     }
   }, [userRole]);
 
-  const fetchCurrentUser = () => {
-    AxiosInstance.get('/users/me/')
-      .then((res) => {
-        setUserRole(res.data.role);
-        setLoggedInUser(res.data);
-      })
-      .catch((err) => console.error('Error fetching user role:', err));
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await AxiosInstance.get('/users/me/');
+      setUserRole(res.data.role);
+      setLoggedInUser(res.data);
+    } catch (err) {
+      console.error('Error fetching user role:', err);
+    }
   };
 
-  const fetchTasks = () => {
-    AxiosInstance.get('/tasks/')
-      .then((res) => {
-        setTasks(res.data);
-      })
-      .catch((err) => console.error('Error fetching tasks:', err));
+  const fetchTasks = async () => {
+    try {
+      const res = await AxiosInstance.get('/tasks/');
+      setTasks(res.data);
+    } catch (err) {
+      console.error('Error fetching tasks:', err);
+    }
   };
 
-  const fetchProjects = () => {
-    AxiosInstance.get('/projects/')
-      .then((res) => {
-        setProjects(res.data);
-      })
-      .catch((err) => console.error('Error fetching projects:', err));
+  const fetchProjects = async () => {
+    try {
+      const res = await AxiosInstance.get('/projects/');
+      setProjects(res.data);
+    } catch (err) {
+      console.error('Error fetching projects:', err);
+    }
   };
 
-  const fetchUsers = () => {
-    AxiosInstance.get('/users/')
-      .then((res) => {
-        setUsers(res.data);
-      })
-      .catch((err) => console.error('Error fetching users:', err));
+  const fetchUsers = async () => {
+    try {
+      const res = await AxiosInstance.get('/users/');
+      setUsers(res.data);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+    }
   };
 
-  const fetchVacations = () => {
-    AxiosInstance.get('/vacations/')
-      .then((res) => {
-        setVacations(res.data);
-      })
-      .catch((err) => console.error('Error fetching vacations:', err));
+  const fetchVacations = async () => {
+    try {
+      const res = await AxiosInstance.get('/vacations/');
+      setVacations(res.data);
+    } catch (err) {
+      console.error('Error fetching vacations:', err);
+    }
   };
 
-  const fetchAllPosts = () => {
-    AxiosInstance.get('/posts/')
-      .then((res) => {
-        setAllPosts(res.data);
-      })
-      .catch((err) => {
-        console.error('Error fetching all posts for calendar:', err);
-      });
+  const fetchAllPosts = async () => {
+    try {
+      const res = await AxiosInstance.get('/posts/');
+      setAllPosts(res.data);
+    } catch (err) {
+      console.error('Error fetching all posts:', err);
+    }
   };
 
-  // ---------------------------------------------
-  // OBSŁUGA ZAKŁADEK
-  // ---------------------------------------------
+  // ========================= OBSŁUGA ZAKŁADEK =========================
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
 
-    // ---------------------------------------------
-  // FILTROWANIE TASKÓW (FRONTEND)
-  // ---------------------------------------------
-  // Zwracamy listę tasks uwzględniając checkbox "showClosed", projectFilter, userFilter
+  // ========================= FILTROWANIE (LISTA ZADAŃ) =========================
   const getFilteredTasks = () => {
     let filtered = [...tasks];
-
-    // 1) Czy pokazywać CLOSED
     if (!showClosed) {
       filtered = filtered.filter((t) => t.status !== 'CLOSED');
     }
-
-    // 2) Filtrowanie po projekcie, jeżeli projectFilter != ''
     if (projectFilter) {
       filtered = filtered.filter(
         (t) => t.assigned_project?.project_id === Number(projectFilter)
       );
     }
-
-    // 3) Filtrowanie po użytkowniku (tylko Boss)
     if (userRole === 'Boss' && userFilter) {
       filtered = filtered.filter(
         (t) => t.assigned_user?.user_id === Number(userFilter)
       );
     }
-
     return filtered;
   };
 
-  // =============================================
-  // 1) LISTA ZADAŃ (Zakładka 0)
-  // =============================================
-
+  // ========================= LISTA ZADAŃ (ZAKŁADKA 0) =========================
   const handleExpandTask = (taskId, isExpanded) => {
     if (isExpanded) {
       setExpandedTaskId(taskId);
-
       AxiosInstance.get(`/posts/?assigned_task=${taskId}`)
         .then((res) => {
-          setPostsByTask((prev) => ({
-            ...prev,
-            [taskId]: res.data,
-          }));
+          setPostsByTask((prev) => ({ ...prev, [taskId]: res.data }));
         })
         .catch((err) => console.error('Error fetching posts:', err));
     } else {
@@ -248,13 +238,9 @@ function Tasks() {
     }
   };
 
-  const getPostsForTask = (taskId) => {
-    return postsByTask[taskId] || [];
-  };
+  const getPostsForTask = (taskId) => postsByTask[taskId] || [];
 
-  // ---------------------------------------------
-  // MENU W ZADANIU
-  // ---------------------------------------------
+  // -------------------- MENU W ZADANIU --------------------
   const handleTaskMenuClick = (event, task) => {
     setMenuAnchorTask(event.currentTarget);
     setSelectedTaskForMenu(task);
@@ -267,20 +253,17 @@ function Tasks() {
   const handleTaskEditClick = () => {
     if (!selectedTaskForMenu) return;
     const t = selectedTaskForMenu;
-
     setEditTaskProject(t.assigned_project?.project_id || '');
     setEditTaskUser(t.assigned_user?.user_id || '');
     setEditTaskName(t.name || '');
     setEditTaskDesc(t.description || '');
     setEditTaskStatus(t.status || 'OPEN');
-
     setOpenTaskDialog(true);
     handleTaskMenuClose();
   };
 
-  const handleSaveTaskChanges = () => {
+  const handleSaveTaskChanges = async () => {
     if (!selectedTaskForMenu) return;
-
     const body = {
       assigned_project_id: editTaskProject,
       assigned_user_id: editTaskUser,
@@ -288,26 +271,22 @@ function Tasks() {
       description: editTaskDesc,
       status: editTaskStatus,
     };
-
-    AxiosInstance.patch(`/tasks/${selectedTaskForMenu.task_id}/`, body)
-      .then(() => fetchTasks()) // odśwież listę zadań
-      .then(() => {
-        setOpenTaskDialog(false);
-        setSelectedTaskForMenu(null);
-        alert('Zadanie zaktualizowane pomyślnie!');
-      })
-      .catch((err) => {
-        console.error('Error updating task:', err?.response?.data || err);
-        alert(
-          'Nie udało się zaktualizować zadania: ' +
-            (err?.response?.data?.detail || '')
-        );
-      });
+    try {
+      await AxiosInstance.patch(`/tasks/${selectedTaskForMenu.task_id}/`, body);
+      await fetchTasks();
+      setOpenTaskDialog(false);
+      setSelectedTaskForMenu(null);
+      alert('Zadanie zaktualizowane pomyślnie!');
+    } catch (err) {
+      console.error('Error updating task:', err?.response?.data || err);
+      alert(
+        'Nie udało się zaktualizować zadania: ' +
+          (err?.response?.data?.detail || '')
+      );
+    }
   };
 
-  // =============================================
-  // 2) MENU W POŚCIE
-  // =============================================
+  // ========================= MENU W POŚCIE =========================
   const handlePostMenuClick = (event, post) => {
     setMenuAnchorPost(event.currentTarget);
     setSelectedPostForMenu(post);
@@ -319,16 +298,14 @@ function Tasks() {
 
   const handlePostEditClick = () => {
     if (!selectedPostForMenu) return;
-    const p = selectedPostForMenu;
-    setEditPostWorkHours(p.work_hours || '');
-    setEditPostComment(p.comment || '');
+    setEditPostWorkHours(selectedPostForMenu.work_hours || '');
+    setEditPostComment(selectedPostForMenu.comment || '');
     setOpenPostDialog(true);
     handlePostMenuClose();
   };
 
-  const handleSavePostChanges = () => {
+  const handleSavePostChanges = async () => {
     if (!selectedPostForMenu) return;
-
     const body = {
       work_hours: editPostWorkHours,
       comment: editPostComment,
@@ -336,38 +313,28 @@ function Tasks() {
     const realTaskId =
       selectedPostForMenu.assigned_task?.task_id ||
       selectedPostForMenu.assigned_task;
-
-    AxiosInstance.patch(`/posts/${selectedPostForMenu.post_id}/`, body)
-      .then(() => AxiosInstance.get(`/posts/?assigned_task=${realTaskId}`))
-      .then((res) => {
-        setPostsByTask((prev) => ({
-          ...prev,
-          [realTaskId]: res.data,
-        }));
-        setOpenPostDialog(false);
-        setSelectedPostForMenu(null);
-        alert('Post zaktualizowany pomyślnie!');
-
-        fetchTasks();
-
-        if (calendarRef.current && calendarRef.current.refreshEvents) {
-          calendarRef.current.refreshEvents();
-        }
-      })
-      .catch((err) => {
-        console.error('Error updating post:', err?.response?.data || err);
-        alert(
-          'Nie udało się zaktualizować posta: ' +
-            (err?.response?.data?.detail || '')
-        );
-      });
+    try {
+      await AxiosInstance.patch(`/posts/${selectedPostForMenu.post_id}/`, body);
+      const res = await AxiosInstance.get(`/posts/?assigned_task=${realTaskId}`);
+      setPostsByTask((prev) => ({ ...prev, [realTaskId]: res.data }));
+      setOpenPostDialog(false);
+      setSelectedPostForMenu(null);
+      alert('Post zaktualizowany pomyślnie!');
+      await fetchTasks();
+      if (calendarRef.current && calendarRef.current.refreshEvents) {
+        calendarRef.current.refreshEvents();
+      }
+    } catch (err) {
+      console.error('Error updating post:', err?.response?.data || err);
+      alert(
+        'Nie udało się zaktualizować posta: ' +
+          (err?.response?.data?.detail || '')
+      );
+    }
   };
 
-  // -> Usuwanie Posta
   const handleDeletePostClick = () => {
-    if (!selectedPostForMenu)
-      return;
-
+    if (!selectedPostForMenu) return;
     setOpenDeletePostDialog(true);
     handlePostMenuClose();
     setDeletePostChecked(false);
@@ -379,46 +346,33 @@ function Tasks() {
     setSelectedPostForMenu(null);
   };
 
-  const handleConfirmDeletePost = () => {
+  const handleConfirmDeletePost = async () => {
     if (!selectedPostForMenu) return;
     const realTaskId =
       selectedPostForMenu.assigned_task?.task_id ||
       selectedPostForMenu.assigned_task;
-
-    AxiosInstance.delete(`/posts/${selectedPostForMenu.post_id}/`)
-      .then(() => {
-        alert('Post usunięty pomyślnie!');
-        return AxiosInstance.get(`/posts/?assigned_task=${realTaskId}`);
-      })
-      .then((res) => {
-
-        setPostsByTask((prev) => ({
-          ...prev,
-          [realTaskId]: res.data,
-        }));
-
-        fetchTasks();
-
-        if (calendarRef.current && calendarRef.current.refreshEvents) {
-          calendarRef.current.refreshEvents();
-        }
-      })
-      .catch((err) => {
-        console.error('Error deleting post:', err?.response?.data || err);
-        alert(
-          'Nie udało się usunąć posta: ' +
-            (err?.response?.data?.detail || '')
-        );
-      })
-      .finally(() => {
-        handleCloseDeletePostDialog();
-      });
+    try {
+      await AxiosInstance.delete(`/posts/${selectedPostForMenu.post_id}/`);
+      alert('Post usunięty pomyślnie!');
+      const res = await AxiosInstance.get(`/posts/?assigned_task=${realTaskId}`);
+      setPostsByTask((prev) => ({ ...prev, [realTaskId]: res.data }));
+      await fetchTasks();
+      if (calendarRef.current && calendarRef.current.refreshEvents) {
+        calendarRef.current.refreshEvents();
+      }
+    } catch (err) {
+      console.error('Error deleting post:', err?.response?.data || err);
+      alert(
+        'Nie udało się usunąć posta: ' +
+          (err?.response?.data?.detail || '')
+      );
+    } finally {
+      handleCloseDeletePostDialog();
+    }
   };
 
-  // =============================================
-  // 3) DODAWANIE POSTA (Zakładka 1)
-  // =============================================
-  const handleAddPost = () => {
+  // ========================= DODAWANIE POSTA (ZAKŁADKA 1) =========================
+  const handleAddPost = async () => {
     if (!selectedDate) {
       alert('Wybierz datę w kalendarzu!');
       return;
@@ -431,41 +385,34 @@ function Tasks() {
       alert('Podaj liczbę godzin!');
       return;
     }
-
     const body = {
       assigned_task_id: newPostAssignedTask,
       work_hours: newPostWorkHours,
       comment: newPostComment,
       post_date: selectedDate?.toISOString(),
     };
+    try {
+      await AxiosInstance.post('/posts/', body);
+      alert('Post dodany!');
+      setNewPostAssignedTask('');
+      setNewPostWorkHours('');
+      setNewPostComment('');
+      setSelectedDate(null);
+      setOpenAddPostDialog(false);
 
-    AxiosInstance.post('/posts/', body)
-      .then(() => {
-        alert('Post dodany!');
-        setNewPostAssignedTask('');
-        setNewPostWorkHours('');
-        setNewPostComment('');
-        setSelectedDate(null);
-        setOpenAddPostDialog(false);
+      const res = await AxiosInstance.get('/posts/');
+      setAllPosts(res.data);
 
-        // Po utworzeniu posta:
-        return AxiosInstance.get('/posts/');
-      })
-      .then((res) => {
-        setAllPosts(res.data);
-        fetchTasks();
-
-        if (calendarRef.current && calendarRef.current.refreshEvents) {
-          calendarRef.current.refreshEvents();
-        }
-      })
-      .catch((err) => {
-        console.error('Error creating post:', err?.response?.data || err);
-        alert(
-          'Nie udało się dodać posta: ' +
-            (err?.response?.data?.detail || '')
-        );
-      });
+      await fetchTasks();
+      if (calendarRef.current && calendarRef.current.refreshEvents) {
+        calendarRef.current.refreshEvents();
+      }
+    } catch (err) {
+      console.error('Error creating post:', err?.response?.data || err);
+      alert(
+        'Nie udało się dodać posta: ' + (err?.response?.data?.detail || '')
+      );
+    }
   };
 
   const handleCloseAddPostDialog = () => {
@@ -476,10 +423,8 @@ function Tasks() {
     setSelectedDate(null);
   };
 
-  // =============================================
-  // 4) DODAWANIE TASKA (Zakładka 2 - Boss)
-  // =============================================
-  const handleAddTask = () => {
+  // ========================= DODAWANIE TASKA (ZAKŁADKA 2 - Boss) =========================
+  const handleAddTask = async () => {
     if (!newTaskAssignedProject) {
       alert('Wybierz projekt');
       return;
@@ -492,7 +437,6 @@ function Tasks() {
       alert('Podaj nazwę zadania');
       return;
     }
-
     const body = {
       assigned_project_id: newTaskAssignedProject,
       assigned_user_id: newTaskAssignedUser,
@@ -500,34 +444,26 @@ function Tasks() {
       description: newTaskDesc,
       status: newTaskStatus,
     };
-
-    AxiosInstance.post('/tasks/', body)
-      .then(() => {
-        alert('Task dodany!');
-        // reset
-        setNewTaskAssignedProject('');
-        setNewTaskAssignedUser('');
-        setNewTaskName('');
-        setNewTaskDesc('');
-        setNewTaskStatus('OPEN');
-
-        return AxiosInstance.get('/tasks/');
-      })
-      .then((res) => {
-        setTasks(res.data);
-      })
-      .catch((err) => {
-        console.error('Error creating task:', err?.response?.data || err);
-        alert(
-          'Nie udało się dodać zadania. ' +
-            (err?.response?.data?.detail || 'Sprawdź uprawnienia.')
-        );
-      });
+    try {
+      await AxiosInstance.post('/tasks/', body);
+      alert('Task dodany!');
+      setNewTaskAssignedProject('');
+      setNewTaskAssignedUser('');
+      setNewTaskName('');
+      setNewTaskDesc('');
+      setNewTaskStatus('OPEN');
+      const res = await AxiosInstance.get('/tasks/');
+      setTasks(res.data);
+    } catch (err) {
+      console.error('Error creating task:', err?.response?.data || err);
+      alert(
+        'Nie udało się dodać zadania. ' +
+          (err?.response?.data?.detail || 'Sprawdź uprawnienia.')
+      );
+    }
   };
 
-  // =============================================
-  // INFORMACJE O POŚCIE (DIALOG)
-  // =============================================
+  // ========================= INFO O POŚCIE (DIALOG) =========================
   const handlePostInfoDialogOpen = (post) => {
     setInfoDialogData(post);
     setOpenPostInfoDialog(true);
@@ -546,51 +482,45 @@ function Tasks() {
     return '(brak użytkownika)';
   };
 
-  // =============================================
-  // DODAWANIE URLOPU (VACATION)
-  // =============================================
-  const handleAddVacation = () => {
+  // ========================= DODAWANIE URLOPU =========================
+  const handleAddVacation = async () => {
     if (!selectedDate) {
       alert('Wybierz datę w kalendarzu!');
       return;
     }
     if (!newVacationAssignedUser) {
-      alert('Brak użytkownika!'); 
+      alert('Brak użytkownika!');
       return;
     }
     if (!newVacationDuration) {
       alert('Podaj czas trwania (h)!');
       return;
     }
-
+    const initialStatus = userRole === 'Boss' ? 'CONFIRMED' : 'PENDING';
     const body = {
       assigned_user_id: newVacationAssignedUser,
       vacation_date: format(selectedDate, 'yyyy-MM-dd'),
       duration: newVacationDuration,
       comments: newVacationComments,
+      status: initialStatus,
     };
-
-    AxiosInstance.post('/vacations/', body)
-      .then(() => {
-        alert('Urlop dodany!');
-        setOpenAddVacationDialog(false);
-        setNewVacationDate('');
-        setNewVacationDuration('');
-        setNewVacationComments('');
-        setNewVacationAssignedUser('');
-
-        return AxiosInstance.get('/vacations/');
-      })
-      .then((res) => {
-        setVacations(res.data);
-        if (calendarRef.current && calendarRef.current.refreshEvents) {
-          calendarRef.current.refreshEvents();
-        }
-      })
-      .catch((err) => {
-        console.error('Error creating vacation:', err?.response?.data || err);
-        alert('Nie udało się dodać urlopu.');
-      });
+    try {
+      await AxiosInstance.post('/vacations/', body);
+      alert('Urlop dodany!');
+      setOpenAddVacationDialog(false);
+      setNewVacationDate('');
+      setNewVacationDuration('');
+      setNewVacationComments('');
+      setNewVacationAssignedUser('');
+      const res = await AxiosInstance.get('/vacations/');
+      setVacations(res.data);
+      if (calendarRef.current && calendarRef.current.refreshEvents) {
+        calendarRef.current.refreshEvents();
+      }
+    } catch (err) {
+      console.error('Error creating vacation:', err?.response?.data || err);
+      alert('Nie udało się dodać urlopu.');
+    }
   };
 
   const handleCloseAddVacationDialog = () => {
@@ -601,26 +531,11 @@ function Tasks() {
     setNewVacationAssignedUser('');
   };
 
-  // ---------------------------------------------
-  // Funkcja otwierająca dialog "Dodaj Urlop" w menu kalendarza
-  // Dla role 'Employee' – automatycznie ustawiamy newVacationAssignedUser na zalogowanego usera
-  // ---------------------------------------------
-  const handleAddVacationFromMenu = () => {
-    handleCloseDayMenu();
-    if (userRole === 'Employee' && loggedInUser) {
-      setNewVacationAssignedUser(loggedInUser.user_id); 
-    }
-    setOpenAddVacationDialog(true);
-  };
-
-  // =============================================
-  // EDYCJA URLOPU
-  // =============================================
+  // ========================= EDYCJA URLOPU (Boss) =========================
   const handleVacationMenuClick = (e, vacation) => {
     if (!vacation) return;
     setMenuAnchorVacation(e.currentTarget);
     setSelectedVacationForMenu(vacation);
-
     setEditVacationDate(vacation.vacation_date);
     setEditVacationDuration(vacation.duration);
     setEditVacationComments(vacation.comments);
@@ -630,43 +545,36 @@ function Tasks() {
     setMenuAnchorVacation(null);
   };
 
-  const handleEditVacation = () => {
+  const handleEditVacation = async () => {
     if (!selectedVacationForMenu) return;
-
     const body = {
       vacation_date: editVacationDate,
       duration: editVacationDuration,
       comments: editVacationComments,
     };
-    AxiosInstance.patch(
-      `/vacations/${selectedVacationForMenu.vacation_id}/`,
-      body
-    )
-      .then(() => {
-        alert('Urlop zaktualizowany!');
-        setOpenVacationDialog(false);
-        setSelectedVacationForMenu(null);
-        setMenuAnchorVacation(null);
+    try {
+      await AxiosInstance.patch(
+        `/vacations/${selectedVacationForMenu.vacation_id}/`,
+        body
+      );
+      alert('Urlop zaktualizowany!');
+      setOpenVacationDialog(false);
+      setSelectedVacationForMenu(null);
+      setMenuAnchorVacation(null);
 
-        return AxiosInstance.get('/vacations/');
-      })
-      .then((res) => {
-        setVacations(res.data);
-
-        if (calendarRef.current && calendarRef.current.refreshEvents) {
-          calendarRef.current.refreshEvents();
-        }
-      })
-      .catch((err) => {
-        console.error('Error updating vacation:', err?.response?.data || err);
-        alert('Nie udało się zaktualizować urlopu.');
-      });
+      const res = await AxiosInstance.get('/vacations/');
+      setVacations(res.data);
+      if (calendarRef.current && calendarRef.current.refreshEvents) {
+        calendarRef.current.refreshEvents();
+      }
+    } catch (err) {
+      console.error('Error updating vacation:', err?.response?.data || err);
+      alert('Nie udało się zaktualizować urlopu.');
+    }
   };
 
-  // =============================================
-  // INFORMACJE O URLOPIE (DIALOG)
-  // =============================================
   const handleVacationInfoDialogOpen = (vacation) => {
+    if (!vacation) return;
     setInfoVacationDialogData(vacation);
     setOpenVacationInfoDialog(true);
   };
@@ -676,16 +584,51 @@ function Tasks() {
     setInfoVacationDialogData(null);
   };
 
-  // =============================================
-  // KALENDARZ - obsługa kliknięć w "pusty dzień" i "event"
-  // =============================================
+  // Zatwierdzenie i Odrzucenie (Boss)
+  const confirmPendingVacation = async () => {
+    if (!infoVacationDialogData) return;
+    try {
+      await AxiosInstance.patch(`/vacations/${infoVacationDialogData.vacation_id}/`, {
+        status: 'CONFIRMED',
+      });
+      alert('Urlop zatwierdzony!');
+      const res = await AxiosInstance.get('/vacations/');
+      setVacations(res.data);
+      setOpenVacationInfoDialog(false);
+      setInfoVacationDialogData(null);
+      if (calendarRef.current && calendarRef.current.refreshEvents) {
+        calendarRef.current.refreshEvents();
+      }
+    } catch (err) {
+      console.error('Error approving vacation:', err?.response?.data || err);
+      alert('Nie udało się zatwierdzić urlopu.');
+    }
+  };
+
+  const denyPendingVacation = async () => {
+    if (!infoVacationDialogData) return;
+    try {
+      await AxiosInstance.delete(`/vacations/${infoVacationDialogData.vacation_id}/`);
+      alert('Urlop został odrzucony.');
+      const res = await AxiosInstance.get('/vacations/');
+      setVacations(res.data);
+      setOpenVacationInfoDialog(false);
+      setInfoVacationDialogData(null);
+      if (calendarRef.current && calendarRef.current.refreshEvents) {
+        calendarRef.current.refreshEvents();
+      }
+    } catch (err) {
+      console.error('Error deleting vacation:', err?.response?.data || err);
+      alert('Nie udało się odrzucić (usunąć) urlopu.');
+    }
+  };
+
+  // ========================= KALENDARZ =========================
   const [menuAnchorDay, setMenuAnchorDay] = useState(null);
 
   const handleEmptyDayClick = (day, anchorEl) => {
     setSelectedDate(day);
-    setMenuAnchorDay({
-      anchor: anchorEl,
-    });
+    setMenuAnchorDay({ anchor: anchorEl });
   };
 
   const handleCloseDayMenu = () => {
@@ -697,6 +640,14 @@ function Tasks() {
     setOpenAddPostDialog(true);
   };
 
+  const handleAddVacationFromMenu = () => {
+    handleCloseDayMenu();
+    if (userRole === 'Employee' && loggedInUser) {
+      setNewVacationAssignedUser(loggedInUser.user_id);
+    }
+    setOpenAddVacationDialog(true);
+  };
+
   const handleEventClick = (event) => {
     if (event.type === 'post') {
       handlePostInfoDialogOpen(event.data);
@@ -705,11 +656,32 @@ function Tasks() {
     }
   };
 
-  // ---------------------------------------------
-  // Dane do kalendarza
-  // ---------------------------------------------
+  // ---- Tworzymy tablicę eventów do kalendarza, z uwzględnieniem FILTRÓW z Kalendarza ----
   const postsToEvents = () => {
-    return allPosts.map((p) => ({
+    // Ewentualne filtrowanie postów w Kalendarzu
+    // - Jeśli np. userRole === 'Boss' i userFilter (calendarUserFilter) jest ustawiony,
+    //   to bierzemy tylko posty, które należą do usera X
+    // - Albo jeśli calendarTaskFilter jest ustawiony, to bierzemy tylko posty z danego taska
+    // Przykład:
+    let filteredPosts = [...allPosts];
+
+    // FILTR DLA BOSSA: calendarUserFilter
+    if (userRole === 'Boss' && calendarUserFilter) {
+      filteredPosts = filteredPosts.filter((p) => {
+        // p.assigned_task.assigned_user.user_id === calendarUserFilter
+        const assignedUserId = p.assigned_task?.assigned_user?.user_id;
+        return assignedUserId === Number(calendarUserFilter);
+      });
+    }
+
+    // FILTR: calendarTaskFilter (jeżeli potrzebny)
+    if (calendarTaskFilter) {
+      filteredPosts = filteredPosts.filter(
+        (p) => p.assigned_task?.task_id === Number(calendarTaskFilter)
+      );
+    }
+
+    return filteredPosts.map((p) => ({
       id: p.post_id,
       type: 'post',
       date: p.post_date,
@@ -718,7 +690,20 @@ function Tasks() {
   };
 
   const vacationsToEvents = () => {
-    return vacations.map((v) => ({
+    let filteredVacations = [...vacations];
+
+    if (hideVacations) {
+      return [];
+    }
+
+    // FILTR DLA BOSSA: calendarUserFilter
+    if (userRole === 'Boss' && calendarUserFilter) {
+      filteredVacations = filteredVacations.filter(
+        (v) => v.assigned_user?.user_id === Number(calendarUserFilter)
+      );
+    }
+
+    return filteredVacations.map((v) => ({
       id: v.vacation_id,
       type: 'vacation',
       date: v.vacation_date,
@@ -726,30 +711,14 @@ function Tasks() {
     }));
   };
 
-  const allEvents = [...postsToEvents(), ...vacationsToEvents()];
+  // Łączymy posty i urlopy w finalEvents
+  const finalEvents = [...postsToEvents(), ...vacationsToEvents()];
 
-  // Zakładki: (0) Lista zadań, (1) Dodaj Post
-  // Gdy userRole = 'Boss', to (2) Dodaj Zadanie
-  const tabLabels = ['Lista zadań', 'Dodaj Post'];
+  // Zakładki
+  const tabLabels = ['Lista zadań', 'Kalendarz'];
   if (userRole === 'Boss') {
     tabLabels.push('Dodaj Zadanie');
   }
-
-  // ---------------------------------------------
-  // STYLE DLA STATUSU: Kolor w zależności od statusu
-  // ---------------------------------------------
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'OPEN':
-        return '#7A0099';
-      case 'SUSPENDED':
-        return '#f2f0f0';
-      case 'CLOSED':
-        return '#0A1931';
-      default:
-        return '#fff';
-    }
-  };
 
   return (
     <Box
@@ -772,10 +741,10 @@ function Tasks() {
         ))}
       </Tabs>
 
-      {/* =================== ZAKŁADKA 0: LISTA ZADAŃ =================== */}
+      {/* ---------------- ZAKŁADKA 0: LISTA ZADAŃ ---------------- */}
       {tabValue === 0 && (
         <Box sx={{ mt: 3 }}>
-          {/* Filtry: checkbox i selecty */}
+          {/* Filtry (lista zadań) */}
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
             <FormControlLabel
               control={
@@ -786,8 +755,6 @@ function Tasks() {
               }
               label="Pokaż zakończone"
             />
-
-            {/* Filtrowanie po Projekcie */}
             <FormControl sx={{ minWidth: 200 }}>
               <InputLabel>Projekt</InputLabel>
               <Select
@@ -803,7 +770,6 @@ function Tasks() {
                 ))}
               </Select>
             </FormControl>
-
             {userRole === 'Boss' && (
               <FormControl sx={{ minWidth: 200 }}>
                 <InputLabel>Użytkownik</InputLabel>
@@ -824,11 +790,11 @@ function Tasks() {
           </Box>
 
           <Grid container spacing={2} sx={{ minHeight: 500 }}>
+            {/* LEWA: zadania */}
             <Grid item xs={12} md={6}>
               <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
                 Lista zadań
               </Typography>
-
               {getFilteredTasks()
                 .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
                 .map((task) => (
@@ -836,9 +802,9 @@ function Tasks() {
                     key={task.task_id}
                     expanded={expandedTaskId === task.task_id}
                     onChange={(_, isExpanded) => handleExpandTask(task.task_id, isExpanded)}
-                    sx={{ 
+                    sx={{
                       mb: 1,
-                      borderLeft: `5px solid ${getStatusColor(task.status)}`,
+                      borderLeft: '5px solid #7A0099',
                     }}
                   >
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -859,7 +825,6 @@ function Tasks() {
                         >
                           {task.name}
                         </Typography>
-
                         {userRole === 'Boss' && (
                           <IconButton
                             size="small"
@@ -892,10 +857,10 @@ function Tasks() {
                       </Typography>
                     </AccordionDetails>
                   </Accordion>
-              ))}
+                ))}
             </Grid>
 
-            {/* Prawa: Posty do wybranego zadania */}
+            {/* PRAWA: Posty */}
             <Grid item xs={12} md={6}>
               <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
                 Lista postów
@@ -903,10 +868,7 @@ function Tasks() {
               {expandedTaskId ? (
                 <>
                   {getPostsForTask(expandedTaskId).length === 0 ? (
-                    <Typography
-                      variant="h6"
-                      sx={{ mb: 2, textAlign: 'center' }}
-                    >
+                    <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
                       Brak postów dla tego zadania
                     </Typography>
                   ) : (
@@ -931,7 +893,12 @@ function Tasks() {
                                 }}
                               >
                                 Data:{' '}
-                                {new Date(post.post_date).toISOString().slice(0,10).split('-').reverse().join('-')}
+                                {new Date(post.post_date)
+                                  .toISOString()
+                                  .slice(0, 10)
+                                  .split('-')
+                                  .reverse()
+                                  .join('-')}
                                 {'  •  '}Godziny pracy: {post.work_hours}
                               </Typography>
                               <IconButton
@@ -963,7 +930,7 @@ function Tasks() {
                             )}
                           </AccordionDetails>
                         </Accordion>
-                    ))
+                      ))
                   )}
                 </>
               ) : (
@@ -976,27 +943,74 @@ function Tasks() {
         </Box>
       )}
 
-      {/* =================== ZAKŁADKA 1: DODAJ POST =================== */}
+      {/* ---------------- ZAKŁADKA 1: KALENDARZ ---------------- */}
       {tabValue === 1 && (
         <Box sx={{ mt: 3, minHeight: 500 }}>
-          <Box sx={{ width: '100%', height: '100%' }}>
-            <Calendar
-              ref={calendarRef}
-              events={allEvents}
-              onEventClick={handleEventClick}
-              onEmptyDayClick={handleEmptyDayClick}
+          {/* FILTRY DLA KALENDARZA */}
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={hideVacations}
+                  onChange={(e) => setHideVacations(e.target.checked)}
+                />
+              }
+              label="Ukryj urlopy"
             />
+
+            {/* Przykład: Select do filtrowania postów po TaskId w Kalendarzu */}
+            <FormControl sx={{ minWidth: 200 }}>
+              <InputLabel>Task</InputLabel>
+              <Select
+                value={calendarTaskFilter}
+                label="Filtr: Task"
+                onChange={(e) => setCalendarTaskFilter(e.target.value)}
+              >
+                <MUIMenuItem value="">(Wszystkie Taski)</MUIMenuItem>
+                {tasks.map((t) => (
+                  <MUIMenuItem key={t.task_id} value={t.task_id}>
+                    {t.name}
+                  </MUIMenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {userRole === 'Boss' && (
+              <>
+                <FormControl sx={{ minWidth: 200 }}>
+                  <InputLabel>Użytkownik</InputLabel>
+                  <Select
+                    value={calendarUserFilter}
+                    label="Filtr: Użytkownik"
+                    onChange={(e) => setCalendarUserFilter(e.target.value)}
+                  >
+                    <MUIMenuItem value="">(Wszyscy użytkownicy)</MUIMenuItem>
+                    {users.map((u) => (
+                      <MUIMenuItem key={u.user_id} value={u.user_id}>
+                        {u.username}
+                      </MUIMenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </>
+            )}
           </Box>
+
+          <Calendar
+            ref={calendarRef}
+            events={finalEvents} // <-- Przekazujemy przefiltrowaną listę eventów
+            onEventClick={handleEventClick}
+            onEmptyDayClick={handleEmptyDayClick}
+          />
         </Box>
       )}
 
-      {/* =================== ZAKŁADKA 2: DODAJ TASK (tylko Boss) =================== */}
+      {/* ---------------- ZAKŁADKA 2: Dodaj Task (tylko Boss) ---------------- */}
       {userRole === 'Boss' && tabValue === 2 && (
         <Box sx={{ mt: 3, maxWidth: 600, margin: '0 auto' }}>
           <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
             Dodaj Zadanie
           </Typography>
-
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
@@ -1068,7 +1082,6 @@ function Tasks() {
               />
             </Grid>
           </Grid>
-
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
             <Button
               variant="contained"
@@ -1084,7 +1097,7 @@ function Tasks() {
         </Box>
       )}
 
-      {/* =================== Menu Zadania =================== */}
+      {/* =================== MENU Zadania =================== */}
       <Menu
         anchorEl={menuAnchorTask}
         open={Boolean(menuAnchorTask)}
@@ -1101,9 +1114,7 @@ function Tasks() {
         fullWidth
       >
         <DialogTitle sx={{ textAlign: 'center' }}>Edytuj Zadanie</DialogTitle>
-        <DialogContent
-          sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: '1rem' }}
-        >
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: '1rem' }}>
           <TextField
             label="Nazwa zadania"
             value={editTaskName}
@@ -1146,7 +1157,6 @@ function Tasks() {
               </FormControl>
             </Grid>
           </Grid>
-
           <TextField
             label="Opis zadania"
             value={editTaskDesc}
@@ -1158,7 +1168,6 @@ function Tasks() {
               style: { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' },
             }}
           />
-
           <FormControl fullWidth>
             <InputLabel>Status</InputLabel>
             <Select
@@ -1207,9 +1216,7 @@ function Tasks() {
         fullWidth
       >
         <DialogTitle sx={{ textAlign: 'center' }}>Edytuj Post</DialogTitle>
-        <DialogContent
-          sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: '1rem' }}
-        >
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: '1rem' }}>
           <TextField
             label="Godziny"
             type="number"
@@ -1233,10 +1240,7 @@ function Tasks() {
           <Button onClick={() => setOpenPostDialog(false)}>Anuluj</Button>
           <Button
             variant="contained"
-            sx={{
-              backgroundColor: 'violet.main',
-              '&:hover': { backgroundColor: 'violet.light' },
-            }}
+            sx={{ backgroundColor: 'violet.main', '&:hover': { backgroundColor: 'violet.light' } }}
             onClick={handleSavePostChanges}
           >
             Zapisz
@@ -1244,7 +1248,7 @@ function Tasks() {
         </DialogActions>
       </Dialog>
 
-      {/* =================== DIALOG USUWANIA POSTA =================== */}
+      {/* =================== Dialog Usuwania Posta =================== */}
       <Dialog
         open={openDeletePostDialog}
         onClose={handleCloseDeletePostDialog}
@@ -1254,9 +1258,7 @@ function Tasks() {
         <DialogTitle sx={{ textAlign: 'center' }}>
           Czy na pewno chcesz usunąć post?
         </DialogTitle>
-        <DialogContent
-          sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}
-        >
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
           <FormControlLabel
             control={
               <Checkbox
@@ -1264,7 +1266,7 @@ function Tasks() {
                 onChange={(e) => setDeletePostChecked(e.target.checked)}
               />
             }
-            label="Tak, jestem pewien"
+            label="Potwierdzam usunięcie posta"
           />
         </DialogContent>
         <DialogActions>
@@ -1303,8 +1305,7 @@ function Tasks() {
                 <strong>Autor posta:</strong> {getUserName(infoDialogData)}
               </Typography>
               <Typography>
-                <strong>Czas pracy (godziny):</strong>{' '}
-                {infoDialogData.work_hours}
+                <strong>Czas pracy (godziny):</strong> {infoDialogData.work_hours}
               </Typography>
               {infoDialogData.comment && (
                 <Typography
@@ -1333,9 +1334,7 @@ function Tasks() {
         fullWidth
       >
         <DialogTitle sx={{ textAlign: 'center' }}>Dodaj Post</DialogTitle>
-        <DialogContent
-          sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}
-        >
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
           <TextField
             label="Data"
             value={selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}
@@ -1351,12 +1350,12 @@ function Tasks() {
               onChange={(e) => setNewPostAssignedTask(e.target.value)}
             >
               {tasks
-                .filter(task => task.status === 'OPEN')
+                .filter((t) => t.status === 'OPEN')
                 .map((t) => (
                   <MUIMenuItem key={t.task_id} value={t.task_id}>
                     {t.name}
                   </MUIMenuItem>
-              ))}
+                ))}
             </Select>
           </FormControl>
           <TextField
@@ -1402,9 +1401,7 @@ function Tasks() {
         fullWidth
       >
         <DialogTitle sx={{ textAlign: 'center' }}>Dodaj Urlop</DialogTitle>
-        <DialogContent
-          sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}
-        >
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
           <TextField
             label="Data Urlopu"
             value={selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}
@@ -1474,10 +1471,7 @@ function Tasks() {
         onClose={handleCloseDayMenu}
       >
         <MUIMenuItem onClick={handleAddPostFromMenu}>Dodaj Post</MUIMenuItem>
-        {/* Employee też może dodać urlop */}
-        <MUIMenuItem onClick={handleAddVacationFromMenu}>
-          Dodaj Urlop
-        </MUIMenuItem>
+        <MUIMenuItem onClick={handleAddVacationFromMenu}>Dodaj Urlop</MUIMenuItem>
       </Menu>
 
       {/* =================== Menu Urlopu =================== */}
@@ -1506,7 +1500,7 @@ function Tasks() {
         </MUIMenuItem>
       </Menu>
 
-      {/* =================== Dialog Edycji Urlopu (Boss) =================== */}
+      {/* =================== Dialog Edycji Urlopu (tylko Boss) =================== */}
       <Dialog
         open={openVacationDialog}
         onClose={() => setOpenVacationDialog(false)}
@@ -1542,10 +1536,7 @@ function Tasks() {
           <Button onClick={() => setOpenVacationDialog(false)}>Anuluj</Button>
           <Button
             variant="contained"
-            sx={{
-              backgroundColor: 'violet.main',
-              '&:hover': { backgroundColor: 'violet.light' },
-            }}
+            sx={{ backgroundColor: 'violet.main', '&:hover': { backgroundColor: 'violet.light' } }}
             onClick={handleEditVacation}
           >
             Zapisz
@@ -1560,34 +1551,79 @@ function Tasks() {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle sx={{ textAlign: 'center' }}>Informacje o Urlopie</DialogTitle>
-        <DialogContent>
-          {infoVacationDialogData && (
-            <>
-              <Typography>
-                <strong>Pracownik:</strong>{' '}
-                {infoVacationDialogData.assigned_user?.username ||
-                  '(Niezdefiniowany)'}
-              </Typography>
-              <Typography>
-                <strong>Data Urlopu:</strong>{' '}
-                {format(new Date(infoVacationDialogData.vacation_date), 'dd-MM-yyyy')}
-              </Typography>
-              <Typography>
-                <strong>Czas trwania:</strong>{' '}
-                {infoVacationDialogData.duration}h
-              </Typography>
-              {infoVacationDialogData.comments && (
-                <Typography>
-                  <strong>Komentarze:</strong> {infoVacationDialogData.comments}
-                </Typography>
-              )}
-            </>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseVacationInfoDialog}>Zamknij</Button>
-        </DialogActions>
+        {infoVacationDialogData && (
+          <>
+            {/* Boss + PENDING => zatwierdzanie lub odrzucanie */}
+            {userRole === 'Boss' && infoVacationDialogData.status === 'PENDING' ? (
+              <>
+                <DialogTitle sx={{ textAlign: 'center' }}>
+                  Zatwierdzenie Urlopu
+                </DialogTitle>
+                <DialogContent>
+                  <Typography>
+                    <strong>Pracownik:</strong>{' '}
+                    {infoVacationDialogData.assigned_user?.username || '(Niezdefiniowany)'}
+                  </Typography>
+                  <Typography>
+                    <strong>Status:</strong> {infoVacationDialogData.status}
+                  </Typography>
+                  <Typography>
+                    <strong>Data Urlopu:</strong>{' '}
+                    {format(new Date(infoVacationDialogData.vacation_date), 'dd-MM-yyyy')}
+                  </Typography>
+                  <Typography>
+                    <strong>Czas trwania:</strong> {infoVacationDialogData.duration}h
+                  </Typography>
+                  {infoVacationDialogData.comments && (
+                    <Typography>
+                      <strong>Komentarze:</strong> {infoVacationDialogData.comments}
+                    </Typography>
+                  )}
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={handleCloseVacationInfoDialog}>Anuluj</Button>
+                  <Button variant="contained" color="error" onClick={denyPendingVacation}>
+                    Odrzuć
+                  </Button>
+                  <Button variant="contained" color="success" onClick={confirmPendingVacation}>
+                    Zatwierdź
+                  </Button>
+                </DialogActions>
+              </>
+            ) : (
+              // Pozostałe przypadki: Employee ZAWSZE, Boss i CONFIRMED
+              <>
+                <DialogTitle sx={{ textAlign: 'center' }}>
+                  Informacje o Urlopie
+                </DialogTitle>
+                <DialogContent>
+                  <Typography>
+                    <strong>Pracownik:</strong>{' '}
+                    {infoVacationDialogData.assigned_user?.username || '(Niezdefiniowany)'}
+                  </Typography>
+                  <Typography>
+                    <strong>Status:</strong> {infoVacationDialogData.status}
+                  </Typography>
+                  <Typography>
+                    <strong>Data Urlopu:</strong>{' '}
+                    {format(new Date(infoVacationDialogData.vacation_date), 'dd-MM-yyyy')}
+                  </Typography>
+                  <Typography>
+                    <strong>Czas trwania:</strong> {infoVacationDialogData.duration}h
+                  </Typography>
+                  {infoVacationDialogData.comments && (
+                    <Typography>
+                      <strong>Komentarze:</strong> {infoVacationDialogData.comments}
+                    </Typography>
+                  )}
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={handleCloseVacationInfoDialog}>Zamknij</Button>
+                </DialogActions>
+              </>
+            )}
+          </>
+        )}
       </Dialog>
     </Box>
   );

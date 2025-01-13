@@ -1,5 +1,4 @@
-// Calendar.js
-import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, forwardRef } from 'react';
 import {
   format,
   startOfMonth,
@@ -14,22 +13,24 @@ import {
 } from 'date-fns';
 import './Calendar.css';
 
-// events: [{ id, type: 'post'|'vacation', date: '2023-01-01', data: {...} }, ...]
-// onEventClick(event), onEmptyDayClick(day, anchorEl)
+/**
+ * Komponent kalendarza – obsługuje dwa rodzaje eventów:
+ * - type === 'post'   -> posty
+ * - type === 'vacation' -> urlopy
+ *
+ * props:
+ *   events: Array -> [{ id, type, date, data }]
+ *   onEventClick: (event) => void  -> kliknięcie w bloczek eventu
+ *   onEmptyDayClick: (day, anchorEl) => void  -> klik w pusty dzień
+ */
 const Calendar = forwardRef(({ events = [], onEventClick, onEmptyDayClick }, ref) => {
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  // Umożliwiamy Tasks.js wywołanie refreshEvents(),
-  useImperativeHandle(ref, () => ({
-    refreshEvents: () => {
-      // Nie robimy tu nic, bo i tak events przychodzi z props.
-      // Ewentualnie można w Tasks.js wywoływać setState i przekazywać w props events na nowo.
-    },
-  }));
-
+  // Nawigacja po miesiącach:
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
 
+  // Generujemy listę dni do wyświetlenia (pełne tygodnie w obrębie miesiąca)
   const generateCalendarDays = () => {
     const startOfCurMonth = startOfMonth(currentDate);
     const endOfCurMonth = endOfMonth(currentDate);
@@ -74,6 +75,7 @@ const Calendar = forwardRef(({ events = [], onEventClick, onEmptyDayClick }, ref
         <h2>{format(currentDate, 'LLLL yyyy')}</h2>
         <button onClick={handleNextMonth}>{'>'}</button>
       </div>
+
       <div className="calendar-weekdays">
         {['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'So', 'Nd'].map((d) => (
           <div key={d} className="calendar-weekday">
@@ -81,6 +83,7 @@ const Calendar = forwardRef(({ events = [], onEventClick, onEmptyDayClick }, ref
           </div>
         ))}
       </div>
+
       <div className="calendar-grid">
         {calendarDays.map((dayItem) => {
           const dayEvents = getEventsForDay(dayItem);
@@ -93,28 +96,47 @@ const Calendar = forwardRef(({ events = [], onEventClick, onEmptyDayClick }, ref
               onClick={(e) => handleDayClick(e, dayItem)}
             >
               <div className="calendar-date">{format(dayItem, 'd')}</div>
+
+              {/* Kontener eventów */}
               {dayEvents.length > 0 && (
                 <div className="calendar-events-scrollable">
-                  {dayEvents.map((ev) => (
-                    <div
-                      key={ev.id}
-                      className={`calendar-event ${
-                        ev.type === 'vacation' ? 'vacation' : 'post'
-                      }`}
-                      onClick={(e) => handleEventClickLocal(e, ev)}
-                    >
-                      {ev.type === 'vacation' ? (
-                        <>
-                          <strong>Urlop</strong> ({ev.data.assigned_user?.username})  
-                        </>
-                      ) : (
-                        <>
-                          <strong>{ev.data.assigned_task?.name || 'Post'}</strong>{' '}
+                  {dayEvents.map((ev) => {
+                    // 1) Jeżeli to post
+                    if (ev.type === 'post') {
+                      return (
+                        <div
+                          key={ev.id}
+                          className="calendar-event post"
+                          onClick={(e) => handleEventClickLocal(e, ev)}
+                        >
+                          <strong>
+                            {ev.data.assigned_task?.name || 'Post'}
+                          </strong>{' '}
                           — {ev.data.work_hours}h
-                        </>
-                      )}
-                    </div>
-                  ))}
+                        </div>
+                      );
+                    }
+                    else {
+                      // ev.type === 'vacation'
+                      // status: 'PENDING' lub 'CONFIRMED'
+                      const vacStatus = ev.data.status;
+                      let vacClass = 'vacation-PENDING'; // domyślnie
+                      if (vacStatus === 'CONFIRMED') {
+                        vacClass = 'vacation-CONFIRMED';
+                      }
+
+                      return (
+                        <div
+                          key={ev.id}
+                          className={`calendar-event vacation ${vacClass}`}
+                          onClick={(e) => handleEventClickLocal(e, ev)}
+                        >
+                          <strong>Urlop</strong>{' '}
+                          ({ev.data.assigned_user?.username})
+                        </div>
+                      );
+                    }
+                  })}
                 </div>
               )}
             </div>

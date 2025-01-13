@@ -15,6 +15,7 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AxiosInstance from '../Axios';
 import { useTheme } from '@mui/material/styles';
+import be from 'date-fns/locale/be';
 
 function Users() {
   const theme = useTheme();
@@ -87,10 +88,6 @@ function Users() {
         p: 2,
       }}
     >
-      <Typography variant="h4" align="center" sx={{ mb: 2 }}>
-        Panel Pracowników
-      </Typography>
-
       <Tabs
         value={tabValue}
         onChange={handleTabChange}
@@ -105,21 +102,27 @@ function Users() {
       {/* Zakładka LISTA */}
       {tabValue === 0 && (
         <Box sx={{ mt: 3 }}>
-          {usersList.map((user) => (
-            <Accordion key={user.user_id || user.id}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>
-                  {user.username} ({user.role})
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Typography>Imię: {user.first_name || '-'}</Typography>
-                <Typography>Nazwisko: {user.last_name || '-'}</Typography>
-                <Typography>Email: {user.email}</Typography>
-                <Typography>Rola: {user.role}</Typography>
-                {/* Dodaj inne pola, jeśli masz w modelu */}
-              </AccordionDetails>
-            </Accordion>
+          {usersList
+            .sort((a, b) => b.user_id - a.user_id)
+            .reverse()
+            .map((user) => (
+              <Accordion
+                key={user.user_id || user.id}
+                sx={{ mb: 1 }} 
+              >
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography>
+                    {user.username} ({user.role})
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Typography>Imię: {user.first_name || '-'}</Typography>
+                  <Typography>Nazwisko: {user.last_name || '-'}</Typography>
+                  <Typography>Email: {user.email}</Typography>
+                  <Typography>Rola: {user.role}</Typography>
+                  {/* Dodaj inne pola, jeśli masz w modelu */}
+                </AccordionDetails>
+              </Accordion>
           ))}
         </Box>
       )}

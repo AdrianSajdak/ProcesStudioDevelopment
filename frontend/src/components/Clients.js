@@ -93,10 +93,6 @@ function Clients() {
         p: 2,
       }}
     >
-      <Typography variant="h4" align="center" sx={{ mb: 2 }}>
-        Panel Klientów
-      </Typography>
-
       <Tabs
         value={tabValue}
         onChange={handleTabChange}
@@ -112,7 +108,10 @@ function Clients() {
       {tabValue === 0 && (
         <Box sx={{ mt: 3 }}>
           {clientsList.map((client) => (
-            <Accordion key={client.client_id || client.id}>
+            <Accordion 
+              key={client.client_id || client.id}
+              sx={{ mb: 1 }}  
+            >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography>{client.name}</Typography>
               </AccordionSummary>

@@ -188,7 +188,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all()
 
     def get_queryset(self):
-        return Project.objects.all()
+        one_year_ago = datetime.now().date() - timedelta(days=365)
+        return Project.objects.filter(created_date__gte=one_year_ago)
 
     def list(self, request, *args, **kwargs):
         perms = RolePermissions.get_permissions_for_role(request.user.role)
@@ -267,10 +268,15 @@ class PhaseViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         perms = RolePermissions.get_permissions_for_role(self.request.user.role)
+
+        one_year_ago = datetime.now().date() - timedelta(days=365)
+
         if not perms.get('can_view_phases', False):
             return Phase.objects.none()
 
-        queryset = Phase.objects.all()
+        queryset = Phase.objects.filter(
+            assigned_project__created_date__gte=one_year_ago
+        )
 
         assigned_project_id  = self.request.query_params.get('assigned_project', None)
         if assigned_project_id  is not None:
@@ -584,9 +590,15 @@ class VacationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         perms = RolePermissions.get_permissions_for_role(self.request.user.role)
+
+        one_year_ago = datetime.now().date() - timedelta(days=365)
+
         if not perms.get('can_view_all_vacations', False):
-            return Vacation.objects.filter(assigned_user=self.request.user)
-        return Vacation.objects.all()
+            return Vacation.objects.filter(
+                assigned_user=self.request.user,
+                vacation_date__gte=one_year_ago
+            )
+        return Vacation.objects.filter(vacation_date__gte=one_year_ago)
         
     def create(self, request, *args, **kwargs):
         perms = RolePermissions.get_permissions_for_role(request.user.role)

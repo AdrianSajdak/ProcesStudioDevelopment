@@ -49,7 +49,7 @@ class RolePermissions:
             'can_view_own_vacations': True,
             'can_create_vacations': True,
             'can_edit_vacations': True,
-            'can_delete_vacations': False,
+            'can_delete_vacations': True,
         },
         'Employee': {
             # PROJECTS

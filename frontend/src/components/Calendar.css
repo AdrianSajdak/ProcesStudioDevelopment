@@ -76,7 +76,20 @@
     color: #ffffff;
   }
 
-  .calendar-event.vacation {
+  .calendar-event.post {
+    background-color: #a104c9;
+  }
+
+  .calendar-event.vacation-PENDING {
+    background-color: #f7dc6f;
+    margin-bottom: 2px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    cursor: pointer;
+    color: #000000;
+  }
+  
+  .calendar-event.vacation-CONFIRMED {
     background-color: #244b8a;
     margin-bottom: 2px;
     padding: 2px 4px;

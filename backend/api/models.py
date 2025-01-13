@@ -90,6 +90,8 @@ class Project(models.Model):
     area = models.DecimalField(max_digits=10, decimal_places=3, blank=True, null=True)
     comments = models.TextField(blank=True, null=True)
 
+    created_date = models.DateTimeField(auto_now_add=True)    
+
     def __str__(self):
         return f"Projekt #{self.project_id} - {self.type} (Klient: {self.assigned_client.name})"
 
@@ -206,10 +208,21 @@ class Vacation(models.Model):
     """
     VACATION MODEL FOR STORING EMPLOYEES VACATIONS
     """
+
+    VACATION_STATUS_CHOICES = (
+        ('PENDING', 'PENDING'),
+        ('CONFIRMED', 'CONFIRMED'),
+    )
+
     vacation_id = models.AutoField(primary_key=True)
     assigned_user = models.ForeignKey(User, on_delete=models.CASCADE)                       # user_id
     vacation_date = models.DateField()
     duration = models.DecimalField(max_digits=4, decimal_places=1, default=8)
+    status = models.CharField(
+        max_length=20,
+        choices=VACATION_STATUS_CHOICES,
+        default='PENDING'
+    )
     comments = models.TextField(blank=True, null=True)
 
     def __str__(self):
