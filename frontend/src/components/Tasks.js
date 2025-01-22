@@ -608,7 +608,9 @@ function Tasks() {
   const denyPendingVacation = async () => {
     if (!infoVacationDialogData) return;
     try {
-      await AxiosInstance.delete(`/vacations/${infoVacationDialogData.vacation_id}/`);
+      await AxiosInstance.patch(`/vacations/${infoVacationDialogData.vacation_id}/`, {
+        status: 'REJECTED',
+      });
       alert('Urlop został odrzucony.');
       const res = await AxiosInstance.get('/vacations/');
       setVacations(res.data);

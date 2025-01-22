@@ -50,6 +50,15 @@ class RolePermissions:
             'can_create_vacations': True,
             'can_edit_vacations': True,
             'can_delete_vacations': True,
+            # NOTIFICATIONS
+            'can_view_vacation_created_notifications': True,
+            'can_view_vacation_updated_notifications': True,
+            'can_view_task_created_notifications': True,
+            'can_view_task_updated_notifications': True,
+            'can_view_project_created_notifications': True,
+            'can_view_project_updated_notifications': True,
+            'can_view_phase_created_notifications': True,
+            'can_view_phase_updated_notifications': True,
         },
         'Employee': {
             # PROJECTS
@@ -90,6 +99,15 @@ class RolePermissions:
             'can_create_vacations': True,
             'can_edit_vacations': False,
             'can_delete_vacations': False,
+            # NOTIFICATIONS
+            'can_view_vacation_created_notifications': False,
+            'can_view_vacation_updated_notifications': True,
+            'can_view_task_created_notifications': True,
+            'can_view_task_updated_notifications': True,
+            'can_view_project_created_notifications': False,
+            'can_view_project_updated_notifications': False,
+            'can_view_phase_created_notifications': False,
+            'can_view_phase_updated_notifications': False,
         }
     }
 
@@ -132,4 +150,13 @@ class RolePermissions:
             'can_create_vacations': False,
             'can_edit_vacations': False,
             'can_delete_vacations': False,
+            # NOTIFICATIONS
+            'can_view_vacation_created_notifications': False,
+            'can_view_vacation_updated_notifications': False,
+            'can_view_task_created_notifications': False,
+            'can_view_task_updated_notifications': False,
+            'can_view_project_created_notifications': False,
+            'can_view_project_updated_notifications': False,
+            'can_view_phase_created_notifications': False,
+            'can_view_phase_updated_notifications': False,
         })

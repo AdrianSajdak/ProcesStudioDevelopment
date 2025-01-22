@@ -1,5 +1,3 @@
-// WymiarowanieZbrojenia.js
-
 import React, { useState, useEffect } from 'react';
 import {
   Tabs,
@@ -40,7 +38,6 @@ import {
   wsppelzania,
   obliczenierysy,
   wymiarowanienaryse,
-  wymiarowanieScinanie,
 } from './utils/calculations';
 
 const WymiarowanieZbrojenia = () => {
@@ -48,11 +45,9 @@ const WymiarowanieZbrojenia = () => {
 
   const [tabValue, setTabValue] = useState(0);
 
-  // Dane materiałowe
-  const [klasaBetonu, setKlasaBetonu] = useState(betonData[2]); // domyślnie C30/37
-  const [klasaStali, setKlasaStali] = useState(stalData[1]);    // domyślnie 500 MPa
+  const [klasaBetonu, setKlasaBetonu] = useState(betonData[2]);
+  const [klasaStali, setKlasaStali] = useState(stalData[1]);
 
-  // Parametry betonu i stali
   const [fck, setFck] = useState(klasaBetonu.f_ck);
   const [fctm, setFctm] = useState(klasaBetonu.f_ctm);
   const [Ecm, setEcm] = useState(klasaBetonu.E_cm);
@@ -60,17 +55,16 @@ const WymiarowanieZbrojenia = () => {
   const [fyk, setFyk] = useState(klasaStali.value);
   const [fyd, setFyd] = useState(klasaStali.value / gammas);
 
-  // Zginanie [SGN]
   const [MSd, setMSd] = useState(0);
   const [h, setH] = useState(0 * cm);
   const [b, setB] = useState(0 * cm);
   const [cnom, setCnom] = useState(0 * mm);
   const [fi, setFi] = useState(20 * mm);
   const [d, setD] = useState(h - cnom - fi);
+
   const [Asreq, setAsreq] = useState(1.0 * cm * cm);
   const [resultAsreq, setResultAsreq] = useState(null);
 
-  // Zarysowanie [SGU]
   const [Mcr, setMcr] = useState(0);
   const [Mk, setMk] = useState(0);
   const [Asprov, setAsprov] = useState(Asreq);
@@ -79,64 +73,26 @@ const WymiarowanieZbrojenia = () => {
   const [wkmax, setWkmax] = useState(0.3 * mm);
   const [Asreq3, setAsreq3] = useState(Asreq);
 
-  // Ścinanie [SGN] - nowa zakładka
-  const [VEd, setVEd] = useState(0);    // kN
-  const [AslShear, setAslShear] = useState(0); // cm^2 (zbrojenie podłużne)
-  const [phiSw, setPhiSw] = useState(8 * mm);  // średnica strzemion
-  const [nSw, setNSw] = useState(2);          // liczba ramion
-
-  // Wyniki ścinania
-  const [shearResults, setShearResults] = useState(null);
-
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
 
   const handleCalculateAsreq = () => {
-    // Moment w [kN*m] => [N*m]
-    const MSd_Nm = MSd * kN * m;
-    const result = wymiarowaniezginanie(MSd_Nm, b, d, fcd, fyd, Es);
+    const result = wymiarowaniezginanie(MSd * kN * m, b, d, fcd, fyd, Es);
     setResultAsreq(result);
   };
 
   const handleCalculateWk = () => {
     const phi = wsppelzania();
     const alpha = (Es / Ecm) * (1 + phi);
-    const Mk_Nm = Mk * kN * m;
-    const wkResult = obliczenierysy(
-      Asprov,
-      b,
-      d,
-      Mk_Nm,
-      Ecm,
-      Es,
-      phi,
-      alpha,
-      h,
-      fi,
-      Mcr
-    );
+    const wkResult = obliczenierysy(Asprov, b, d, Mk * kN * m, Ecm, Es, phi, alpha, h, fi, Mcr);
     setWk(wkResult);
   };
 
   const handleCalculateAsreq3 = () => {
     const phi = wsppelzania();
     const alpha = (Es / Ecm) * (1 + phi);
-    const Mk_Nm = Mk * kN * m;
-    const Asreq3Result = wymiarowanienaryse(
-      wkmax,
-      Asreq,
-      b,
-      d,
-      Mk_Nm,
-      Ecm,
-      Es,
-      phi,
-      alpha,
-      h,
-      fi,
-      Mcr
-    );
+    const Asreq3Result = wymiarowanienaryse(wkmax, Asreq, b, d, Mk * kN * m, Ecm, Es, phi, alpha, h, fi, Mcr);
     setAsreq3(Asreq3Result);
   };
 
@@ -165,25 +121,9 @@ const WymiarowanieZbrojenia = () => {
   }, [h, cnom, fi]);
 
   useEffect(() => {
-    // Mcr = fctm*b*d^2/6 (w N*m)
     const McrValue = (fctm * b * Math.pow(d, 2)) / 6;
     setMcr(McrValue);
   }, [fctm, b, d]);
-
-  // Obsługa obliczania ścinania
-  const handleCalculateShear = () => {
-    const results = wymiarowanieScinanie(
-      VEd,         // kN
-      b,           // [m]
-      d,           // [m]
-      fck,         // [Pa]
-      fyk,         // [Pa]
-      AslShear,    // [cm^2]
-      nSw,
-      phiSw / mm   // fi_sw w mm (sama liczba)
-    );
-    setShearResults(results);
-  };
 
   return (
     <Box
@@ -205,20 +145,19 @@ const WymiarowanieZbrojenia = () => {
         aria-label="tabs"
         sx={{ marginBottom: 2 }}
         textColor="inherit"
-        TabIndicatorProps={{ style: { backgroundColor: theme.palette.violet?.light || '#AA00FF' } }}
+        TabIndicatorProps={{ style: { backgroundColor: theme.palette.violet.light } }}
       >
         <Tab label="Dane materiałowe" />
         <Tab label="Zginanie [SGN]" />
-        <Tab label="Ścinanie [SGN]" />
         <Tab label="Zarysowanie [SGU]" />
         <Tab label="Ugięcie [SGU]" />
       </Tabs>
 
-      {/* Zakładka 0: Dane materiałowe */}
+      {/* Dane materiałowe */}
       {tabValue === 0 && (
         <Box p={2}>
           <Typography variant="h5" align="center">
-            Dane materiałowe
+            Zginanie [SGN]
           </Typography>
           <Box mt={2}>
             <FormControl fullWidth>
@@ -250,30 +189,10 @@ const WymiarowanieZbrojenia = () => {
               </Select>
             </FormControl>
           </Box>
-          <Box mt={2}>
-            <Typography variant="body2">
-              f<sub>ck</sub> = {(fck / MPa).toFixed(1)} MPa
-            </Typography>
-            <Typography variant="body2">
-              f<sub>ctm</sub> = {(fctm / MPa).toFixed(2)} MPa
-            </Typography>
-            <Typography variant="body2">
-              E<sub>cm</sub> = {(Ecm / GPa).toFixed(1)} GPa
-            </Typography>
-            <Typography variant="body2">
-              f<sub>cd</sub> = {(fcd / MPa).toFixed(2)} MPa
-            </Typography>
-            <Typography variant="body2">
-              f<sub>yk</sub> = {(fyk / MPa).toFixed(0)} MPa
-            </Typography>
-            <Typography variant="body2">
-              f<sub>yd</sub> = {(fyd / MPa).toFixed(0)} MPa
-            </Typography>
-          </Box>
         </Box>
       )}
 
-      {/* Zakładka 1: Zginanie [SGN] */}
+      {/* Zginanie [SGN] */}
       {tabValue === 1 && (
         <Box p={2}>
           <Typography variant="h5" align="center">
@@ -359,105 +278,8 @@ const WymiarowanieZbrojenia = () => {
         </Box>
       )}
 
-      {/* Zakładka 2: Ścinanie [SGN] */}
+      {/* Zarysowanie [SGU] */}
       {tabValue === 2 && (
-        <Box p={2}>
-          <Typography variant="h5" align="center">
-            Ścinanie [SGN]
-          </Typography>
-
-          <Box component="form" sx={{ mt: 2 }}>
-            <TextField
-              label="Siła tnąca VEd [kN]"
-              type="number"
-              value={VEd}
-              onChange={(e) => setVEd(parseFloat(e.target.value))}
-              fullWidth
-              margin="normal"
-            />
-            <TextField
-              label="Zbrojenie podłużne Asl [cm²]"
-              type="number"
-              value={AslShear}
-              onChange={(e) => setAslShear(parseFloat(e.target.value))}
-              fullWidth
-              margin="normal"
-            />
-            <FormControl fullWidth sx={{ mt: 2 }}>
-              <InputLabel>Średnica strzemion [mm]</InputLabel>
-              <Select
-                value={phiSw / mm}
-                label="Średnica strzemion [mm]"
-                onChange={(e) => setPhiSw(parseFloat(e.target.value) * mm)}
-              >
-                {[6, 8, 10, 12].map((diameter) => (
-                  <MenuItem key={diameter} value={diameter}>
-                    {diameter}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <TextField
-              label="Liczba ramion w strzemieniu (n)"
-              type="number"
-              value={nSw}
-              onChange={(e) => setNSw(parseFloat(e.target.value))}
-              fullWidth
-              margin="normal"
-            />
-
-            <Divider sx={{ my: 2 }} />
-            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-              <Button
-                variant="contained"
-                onClick={handleCalculateShear}
-                sx={{
-                  backgroundColor: 'violet.main',
-                  '&:hover': { backgroundColor: 'violet.light' },
-                }}
-              >
-                Oblicz nośność na ścinanie
-              </Button>
-            </Box>
-          </Box>
-
-          {shearResults && (
-            <Box mt={3}>
-              <Typography variant="body1">
-                <strong>{shearResults.message}</strong>
-              </Typography>
-              <Typography variant="body2">
-                V<sub>Rd,c</sub> = {shearResults.VRd_c.toFixed(2)} kN
-              </Typography>
-              <Typography variant="body2">
-                v<sub>Rd,c</sub> = {shearResults.vRd_c.toFixed(2)} MPa
-              </Typography>
-              <Typography variant="body2">
-                v<sub>Rd,max</sub> = {shearResults.vRd_max.toFixed(2)} MPa
-              </Typography>
-              <Typography variant="body2">
-                V<sub>Rd,max</sub> = {shearResults.VRd_max.toFixed(2)} kN
-              </Typography>
-
-              {shearResults.neededShearReinf && (
-                <>
-                  <Typography variant="body2" sx={{ mt: 1 }}>
-                    Wymagane Asw/s ={' '}
-                    {shearResults.AswPerMeter.toFixed(2)} cm²/m
-                  </Typography>
-                  <Typography variant="body2">
-                    Zalecany rozstaw strzemion s{' ≤ '}
-                    {shearResults.sRecommended.toFixed(1)} cm
-                  </Typography>
-                </>
-              )}
-            </Box>
-          )}
-        </Box>
-      )}
-
-      {/* Zakładka 3: Zarysowanie [SGU] */}
-      {tabValue === 3 && (
         <Box p={2}>
           <Typography variant="h5" align="center">
             Zarysowanie [SGU]
@@ -494,13 +316,13 @@ const WymiarowanieZbrojenia = () => {
                   '&:hover': { backgroundColor: 'violet.light' },
                 }}
               >
-                Oblicz rysę
+                Oblicz ryse
               </Button>
             </Box>
 
             {wk !== 0 && (
               <Typography variant="body1" align="center" sx={{ mt: 2 }}>
-                Rozwarcie rysy dla przyjętego zbrojenia w<sub>k</sub> ={' '}
+                Rozwarcie rysy dla przyjętego zbrojenia wk ={' '}
                 {(wk / mm).toFixed(2)} mm
               </Typography>
             )}
@@ -512,13 +334,13 @@ const WymiarowanieZbrojenia = () => {
                   onChange={(e) => setCalculateRysa(e.target.checked)}
                 />
               }
-              label="Wymiarowanie zbrojenia dla maksymalnego rozwarcia rysy"
+              label="Wymiarowanie zbrojenia dla maksymalnej rozwarcia rysy"
             />
             {calculateRysa && (
               <Box sx={{ mt: 2 }}>
                 <FormControl fullWidth>
                   <InputLabel>
-                    Graniczna wartość rozwarcia rysy w<sub>kmax</sub> [mm]
+                    Graniczna wartość rozwarcia rysy wkmax [mm]
                   </InputLabel>
                   <Select
                     value={wkmax / mm}
@@ -549,7 +371,7 @@ const WymiarowanieZbrojenia = () => {
 
                 {Asreq3 !== 0 && (
                   <Typography variant="body1" sx={{ mt: 2 }}>
-                    Wymagane pole zbrojenia na zarysowanie: As<sub>req</sub> ={' '}
+                    Wymagane pole zbrojenia na zarysowanie: Asreq ={' '}
                     {(Asreq3 / (cm * cm)).toFixed(2)} cm²
                   </Typography>
                 )}
@@ -559,20 +381,15 @@ const WymiarowanieZbrojenia = () => {
         </Box>
       )}
 
-      {/* Zakładka 4: Ugięcie [SGU] */}
-      {tabValue === 4 && (
+      {/* Ugięcie [SGU] */}
+      {tabValue === 3 && (
         <Box p={2}>
-          <Typography variant="h5" align="center">
-            Ugięcie [SGU]
-          </Typography>
+          <Typography variant="h5">Ugięcie [SGU]</Typography>
           <Typography variant="body1">
             Klasa betonu: {klasaBetonu.name}
           </Typography>
           <Typography variant="body1">
             Klasa stali: {klasaStali.label}
-          </Typography>
-          <Typography variant="body2" sx={{ mt: 2 }}>
-            (Tutaj można dodać funkcje obliczeniowe dla ugięć.)
           </Typography>
         </Box>
       )}

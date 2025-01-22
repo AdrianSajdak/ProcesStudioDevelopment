@@ -12,6 +12,8 @@ import {
   ListItemText,
   IconButton,
   Typography,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import CalculateIcon from '@mui/icons-material/Calculate';
@@ -19,9 +21,10 @@ import ChecklistIcon from '@mui/icons-material/Checklist';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import InfoIcon from '@mui/icons-material/Info';
 import AccountMenu from './AccountMenu';
-import WorkOffIcon from '@mui/icons-material/WorkOff';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import Badge from '@mui/material/Badge';
 import Footer from './Footer';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate  } from 'react-router-dom';
 
 import AxiosInstance from '../Axios';
 import PeopleAltIcon from '@mui/icons-material/People';
@@ -37,6 +40,20 @@ export default function ClippedDrawer(props) {
   const [open, setOpen] = React.useState(false);
   const [userRole, setUserRole] = useState(null);
 
+  const [notifications, setNotifications] = useState([]);
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const navigate = useNavigate();
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await AxiosInstance.get('/notifications/');
+      setNotifications(res.data);
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+    }
+  };
+
   useEffect(() => {
     AxiosInstance.get('/users/me/')
       .then((response) => {
@@ -46,7 +63,21 @@ export default function ClippedDrawer(props) {
       .catch((error) => {
         console.error('Error fetching user data:', error);
       });
+    fetchNotifications();
   }, []);
+
+  const handleNotificationClick = async (notif) => {
+    try {
+      await AxiosInstance.patch(`/notifications/${notif.notification_id}/mark-read/`);
+    } catch (err) {
+      console.error('Error marking notification as read:', err);
+    }
+  
+    setNotifications(prev => prev.filter(n => n.notification_id !== notif.notification_id));
+  
+    setAnchorEl(null);
+    navigate('/tasks');
+  };
 
   const changeOpenStatus = () => {
     setOpen(!open);
@@ -127,35 +158,6 @@ export default function ClippedDrawer(props) {
               <ListItemText primary="Zadania" />
             </ListItemButton>
           </ListItem>
-
-          {/* <ListItem disablePadding>
-            <ListItemButton
-              component={Link}
-              to="/vacations"
-              selected={"/vacations" === path}
-              sx={{
-                mb: 1,
-                mx: 1,
-                borderRadius: 1,
-                color: 'text.primary',
-                '&.Mui-selected': {
-                  backgroundColor: 'violet.main',
-                  color: '#fff',
-                  '& .MuiListItemIcon-root': {
-                    color: '#fff',
-                  },
-                },
-                '&:hover': {
-                  backgroundColor: 'violet.dark',
-                },
-              }}
-            >
-              <ListItemIcon sx={{ color: 'inherit' }}>
-                <WorkOffIcon />
-              </ListItemIcon>
-              <ListItemText primary="Urlopy" />
-            </ListItemButton>
-          </ListItem> */}
 
           <ListItem disablePadding>
             <ListItemButton
@@ -316,8 +318,34 @@ export default function ClippedDrawer(props) {
               style={{ width: '50px', height: '25px' }}
             />
           </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton color="inherit" onClick={(e) => setAnchorEl(e.currentTarget)}>
+              <Badge badgeContent={notifications.length} color="error">
+                <NotificationsIcon />
+              </Badge>
+            </IconButton>
 
-          <AccountMenu onLogout={onLogout} />
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={() => setAnchorEl(null)}
+            >
+              {notifications.length === 0 ? (
+                <MenuItem>Brak powiadomień</MenuItem>
+              ) : (
+                notifications.map((notif) => (
+                  <MenuItem
+                    key={notif.notification_id}
+                    onClick={() => handleNotificationClick(notif)}
+                  >
+                    {notif.title}
+                  </MenuItem>
+                ))
+              )}
+            </Menu>
+
+            <AccountMenu onLogout={onLogout} />
+          </Box>
         </Toolbar>
       </AppBar>
 

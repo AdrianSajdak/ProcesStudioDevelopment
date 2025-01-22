@@ -195,3 +195,12 @@ class VacationSerializer(serializers.ModelSerializer):
             user_id = validated_data.pop('assigned_user_id')
             instance.assigned_user = User.objects.get(pk=user_id)
         return super().update(instance, validated_data)
+    
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = [
+            'notification_id', 'title', 'type',
+            'message', 'created_at', 'is_read',
+        ]

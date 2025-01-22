@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, Client, Project, Phase, Task, Post, Vacation
+from .models import User, Client, Project, Phase, Task, Post, Vacation, Notification
 
 
 @admin.register(User)
@@ -108,5 +108,3 @@ class VacationAdmin(admin.ModelAdmin):
         return f"{obj.vacation_date} ({obj.duration}h)"
     get_vacation_date.short_description = 'Vacation Date'
     get_vacation_date.admin_order_field = 'vacation_date'
-
-

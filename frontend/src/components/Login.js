@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { alignProperty } from '@mui/material/styles/cssUtils';
 
+import logo_ps from '../components/images/logo_ps.png';
+
 function Login({ onLogin }) {
   const theme = useTheme();
 
@@ -58,7 +60,16 @@ function Login({ onLogin }) {
           boxShadow: 3,
         }}
       >
-        <Typography variant="h5" textAlign="center">
+
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+          <img
+            src={logo_ps}
+            alt="logo_ps"
+            style={{ width: '120px' }}
+          />
+        </Box>
+
+        <Typography variant="h4" textAlign="center">
           Zaloguj się
         </Typography>
         {error && <Typography color="error">{error}</Typography>}

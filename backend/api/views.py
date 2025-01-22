@@ -5,8 +5,9 @@ import uuid
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
 from datetime import datetime, timedelta
+from django.contrib.auth import get_user_model
 
-from .models import User, Project, Phase, Task, Post, Client, Vacation
+from .models import User, Project, Phase, Task, Post, Client, Vacation, Notification
 from .serializers import (
     RegisterSerializer,
     UserSerializer,
@@ -15,12 +16,44 @@ from .serializers import (
     TaskSerializer,
     PostSerializer,
     ClientSerializer,
-    VacationSerializer
+    VacationSerializer,
+    NotificationSerializer
 )
-from .permissions import IsBossUser, RolePermissions
+from .permissions import RolePermissions
+from .notification_variables import PROJECT_NOTIFICATIONS, PHASE_NOTIFICATIONS, TASK_NOTIFICATIONS, VACATION_NOTIFICATIONS, CLIENT_NOTIFICATIONS
+
+from .decorators import check_permission
 
 import mimetypes
 from rest_framework.views import APIView
+
+# ------------------ NOTIFICATION ------------------
+def create_notifications_with_permissions(permission_name, notification_type, title, message, recipient=None):
+    User = get_user_model()
+
+    # NOTIFICATION FOR A SPECIFIC USER
+    if recipient:
+        perms = RolePermissions.get_permissions_for_role(recipient.role)
+        if perms.get(permission_name, False):
+            Notification.objects.create(
+                recipient=recipient,
+                type=notification_type,
+                title=title,
+                message=message
+            )
+        return
+    
+    # NOTIFICATIONS FOR A GROUP OF PRIVILEGED USERS
+    for user in User.objects.filter(is_active=True):
+        perms = RolePermissions.get_permissions_for_role(user.role)
+        if perms.get(permission_name, False):
+            Notification.objects.create(
+                recipient=user,
+                type=notification_type,
+                title=title,
+                message=message
+            )
+    
 
 # ------------------ PROFILE PICTURE ------------------
 ALLOWED_TYPES = ['image/jpeg', 'image/png']
@@ -35,7 +68,7 @@ class RegisterView(generics.CreateAPIView):
     """
     VIEW FOR REGISTERING NEW USERS
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     serializer_class = RegisterSerializer
 
     def post(self, request):
@@ -68,13 +101,8 @@ class UserViewSet(viewsets.ModelViewSet):
                 return self.request.user
         return super().get_object()
 
+    @check_permission('can_view_users', 'No permissions to view users.')
     def list(self, request):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not IsBossUser().has_permission(request, self) or not perms['can_view_users']:
-            return Response(
-                {'detail': 'No permissions to view users.'},
-                status=403
-            )
         queryset = self.get_queryset()
         serializer = self.serializer_class(queryset, many=True)
         return Response(serializer.data)
@@ -85,61 +113,56 @@ class UserViewSet(viewsets.ModelViewSet):
             status=status.HTTP_405_METHOD_NOT_ALLOWED
         )
 
+    @check_permission('can_view_users', 'No permissions to view users.')
     def retrieve(self, request, pk=None):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not IsBossUser().has_permission(request, self) or not perms['can_view_users']:
-            return Response({'detail': 'No permissions to view users.'}, status=403)
         user = self.get_object()
         serializer = self.serializer_class(user)
         return Response(serializer.data)
     
+    @check_permission('can_edit_users', 'No permissions to edit users.')
     def update(self, request, pk=None):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not IsBossUser().has_permission(request, self) or not perms['can_edit_users']:
-            return Response({'detail': 'No permissions to edit users.'}, status=403)
         user = self.get_object()
         serializer = self.serializer_class(user, data=request.data, partial=False)
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
-        return Response(serializer.errors, status=400)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    @check_permission('can_edit_users', 'No permissions to edit users.')
     def partial_update(self, request, pk=None):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not IsBossUser().has_permission(request, self) or not perms['can_edit_users']:
-            return Response({'detail': 'No permissions to edit users.'}, status=status.HTTP_403_FORBIDDEN)
         user = self.get_object()
         serializer = self.serializer_class(user, data=request.data, partial=True)
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @check_permission('can_delete_users', 'No permissions to delete users.')
     def destroy(self, request, pk=None):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not IsBossUser().has_permission(request, self) or not perms['can_delete_users']:
-            return Response({'detail': 'No permissions to delete users.'}, status=403)
         user = self.get_object()
         user.delete()
-        return Response(status=204)
+        return Response({'detail': 'User deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
     
+    @check_permission('can_edit_password', 'No permissions to change password.')
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def change_password(self, request):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_edit_password', False):
-            return Response({'detail': 'No permissions to change password.'}, status=403)
+        # perms = RolePermissions.get_permissions_for_role(request.user.role)
+        # if not perms.get('can_edit_password', False):
+        #     return Response({'detail': 'No permissions to change password.'}, status=status.HTTP_403_FORBIDDEN)
 
         user = request.user
         old_password = request.data.get('old_password')
         new_password = request.data.get('new_password')
 
         if not user.check_password(old_password):
-            return Response({'detail': 'Invalid old password.'}, status=400)
+            return Response({'detail': 'Invalid old password.'}, status=status.HTTP_400_BAD_REQUEST)
 
         user.set_password(new_password)
         user.save()
 
-        return Response({'detail': 'Password changed successfully.'}, status=200)
+        return Response({'detail': 'Password changed successfully.'}, status=status.HTTP_200_OK)
     
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def upload_profile_picture(self, request):
@@ -191,59 +214,56 @@ class ProjectViewSet(viewsets.ModelViewSet):
         one_year_ago = datetime.now().date() - timedelta(days=365)
         return Project.objects.filter(created_date__gte=one_year_ago)
 
+    @check_permission('can_view_projects', 'No permissions to view projects.')
     def list(self, request, *args, **kwargs):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_view_projects', False):
-            return Response(
-                {"detail": "You don't have permissions to view projects."},
-                status=status.HTTP_403_FORBIDDEN
-            )
         return super().list(request, *args, **kwargs)
 
+    @check_permission('can_create_projects', 'No permissions to create projects.')
     def create(self, request, *args, **kwargs):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_create_projects', False):
-            return Response(
-                {"detail": "You don't have permissions to create projects."},
-                status=status.HTTP_403_FORBIDDEN
+        response = super().create(request, *args, **kwargs)
+
+        if response.status_code == 201:
+            project_name = response.data.get('name')
+            create_notifications_with_permissions(
+                'can_view_project_created_notifications',
+                'PROJECT',
+                PROJECT_NOTIFICATIONS['created']['title'].format(project_name),
+                PROJECT_NOTIFICATIONS['created']['message'].format(project_name)
             )
-        return super().create(request, *args, **kwargs)
+        return response
     
+    @check_permission('can_view_projects', 'No permissions to view projects.')
     def retrieve(self, request, pk=None):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_view_projects', False):
-            return Response(
-                {"detail": "You don't have permissions to view projects."},
-                status=status.HTTP_403_FORBIDDEN
-            )
         return super().retrieve(request, pk)
 
+    @check_permission('can_edit_projects', 'No permissions to edit projects.')
     def update(self, request, *args, **kwargs):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_edit_projects', False):
-            return Response(
-                {"detail": "No permissions to edit projects."},
-                status=status.HTTP_403_FORBIDDEN
-            )
         partial = kwargs.pop('partial', False)
+
         return super().update(request, partial=partial, *args, **kwargs)
 
+    @check_permission('can_edit_projects', 'No permissions to edit projects.')
     def partial_update(self, request, *args, **kwargs):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_edit_projects', False):
-            return Response(
-                {"detail": "No permissions to edit projects."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        return super().partial_update(request, *args, **kwargs)
+        project = self.get_object()
+        old_status = project.status
 
+        response = super().partial_update(request, *args, **kwargs)
+
+        if response.status_code in [200, 202]:
+            new_status = response.data.get('status')
+            project_name = response.data.get('name')
+            if old_status != project.status:
+                create_notifications_with_permissions(
+                    'can_view_project_updated_notifications',
+                    'PROJECT',
+                    PROJECT_NOTIFICATIONS['status_changed']['title'].format(project_name),
+                    PROJECT_NOTIFICATIONS['status_changed']['message'].format(old_status, new_status)
+                )
+
+        return response
+
+    @check_permission('can_delete_projects', 'No permissions to delete projects.')
     def destroy(self, request, pk=None):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_delete_projects', False):
-            return Response(
-                {"detail": "You don't have permissions to delete projects."},
-                status=status.HTTP_403_FORBIDDEN
-            )
         return super().destroy(request, pk)
     
     def perform_update(self, serializer):
@@ -283,60 +303,55 @@ class PhaseViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(assigned_project_id=assigned_project_id )
 
         return queryset
-        
+    
+    @check_permission('can_view_phases', 'No permissions to view phases.')
     def list(self, request, *args, **kwargs):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_view_phases', False):
-            return Response(
-                {"detail": "You don't have permissions to view phases."},
-                status=status.HTTP_403_FORBIDDEN
-            )
         return super().list(request, *args, **kwargs)
     
+    @check_permission('can_create_phases', 'No permissions to create phases.')
     def create(self, request, *args, **kwargs):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_create_phases', False):
-            return Response(
-                {"detail": "You don't have permissions to create phases."},
-                status=status.HTTP_403_FORBIDDEN
+        response = super().create(request, *args, **kwargs)
+
+        if response.status_code == 201:
+            phase_name = response.data.get('name')
+            create_notifications_with_permissions(
+                'can_view_phase_created_notifications',
+                'PHASE',
+                PHASE_NOTIFICATIONS['created']['title'].format(phase_name),
+                PHASE_NOTIFICATIONS['created']['message']
             )
-        return super().create(request, *args, **kwargs)
+        return response
     
+    @check_permission('can_edit_phases', 'No permissions to edit phases.')
     def update(self, request, *args, **kwargs):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_edit_phases', False):
-            return Response(
-                {"detail": "No permissions to edit phases."},
-                status=status.HTTP_403_FORBIDDEN
-            )
         partial = kwargs.pop('partial', False)
         return super().update(request, partial=partial, *args, **kwargs)
 
+    @check_permission('can_edit_phases', 'No permissions to edit phases.')
     def partial_update(self, request, *args, **kwargs):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_edit_phases', False):
-            return Response(
-                {"detail": "No permissions to edit phases."},
-                status=status.HTTP_403_FORBIDDEN
+        phase = self.get_object()
+        old_status = phase.status
+
+        response = super().partial_update(request, *args, **kwargs)
+
+        if response.status_code in [200, 202] and old_status != response.data.get('status'):
+            create_notifications_with_permissions(
+                'can_view_phase_updated_notifications',
+                'PHASE',
+                PHASE_NOTIFICATIONS['status_changed']['title'].format(phase.name),
+                PHASE_NOTIFICATIONS['status_changed']['message'].format(
+                    old_status,
+                    response.data.get('status')
+                )
             )
-        return super().partial_update(request, *args, **kwargs)
+        return response
     
+    @check_permission('can_delete_phases', 'No permissions to delete phases.')
     def destroy(self, request, pk=None):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_delete_phases', False):
-            return Response(
-                {"detail": "You don't have permissions to delete phases."},
-                status=status.HTTP_403_FORBIDDEN
-            )
         return super().destroy(request, pk)
     
+    @check_permission('can_view_phases', 'No permissions to view phases.')
     def retrieve(self, request, pk=None):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_view_phases', False):
-            return Response(
-                {"detail": "You don't have permissions to view phases."},
-                status=status.HTTP_403_FORBIDDEN
-            )
         return super().retrieve(request, pk)
 
 
@@ -361,48 +376,53 @@ class TaskViewSet(viewsets.ModelViewSet):
             )
         return Task.objects.filter(created_date__gte=one_year_ago)
     
+    @check_permission('can_create_tasks', 'No permissions to create tasks.')
     def create(self, request, *args, **kwargs):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_create_tasks', False):
-            return Response(
-                {"detail": "You don't have permissions to create tasks."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        return super().create(request, *args, **kwargs)
+        
+        response = super().create(request, *args, **kwargs)
+
+        if response.status_code == 201:
+            assigned_user = response.data.get('assigned_user')
+            if assigned_user:
+                create_notifications_with_permissions(
+                    'can_view_task_created_notifications',
+                    'TASK',
+                    TASK_NOTIFICATIONS['created']['title'].format(assigned_user['username']),
+                    TASK_NOTIFICATIONS['created']['message'],
+                    recipient=User.objects.get(id=assigned_user['user_id'])
+                )
+        return response
     
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
     
+    @check_permission('can_edit_tasks', 'No permissions to edit tasks.')
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
 
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_edit_tasks', False):
-            return Response(
-                {"detail": "You don't have permissions to edit tasks."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
         return super().update(request, *args, partial=partial, **kwargs)
 
-    
+    @check_permission('can_edit_tasks', 'No permissions to edit tasks.')
     def partial_update(self, request, *args, **kwargs):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_edit_tasks', False):
-            return Response(
-                {"detail": "You don't have permissions to edit tasks."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
-        return super().partial_update(request, *args, **kwargs)
+        task = self.get_object()
+        old_status = task.status
+        
+        response = super().partial_update(request, *args, **kwargs)
     
-    def destroy(self, request, pk=None):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_delete_tasks', False):
-            return Response(
-                {"detail": "You don't have permissions to delete tasks."},
-                status=status.HTTP_403_FORBIDDEN
+        if response.status_code in [200, 202] and old_status != response.data.get('status'):
+            create_notifications_with_permissions(
+                'can_view_task_updated_notifications',
+                'TASK',
+                TASK_NOTIFICATIONS['status_changed']['title'].format(task.name),
+                TASK_NOTIFICATIONS['status_changed']['message'].format(
+                    old_status, response.data.get('status')
+                ),
+                recipient=task.assigned_user
             )
+        return response
+
+    @check_permission('can_delete_tasks', 'No permissions to delete tasks.')
+    def destroy(self, request, pk=None):
         return super().destroy(request, pk)
     
     def retrieve(self, request, pk=None):
@@ -461,55 +481,27 @@ class PostViewSet(viewsets.ModelViewSet):
             return queryset
         else:
             return Post.objects.none()
-        
+    
+    @check_permission('can_create_posts', 'No permissions to create posts.')
     def create(self, request, *args, **kwargs):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_create_posts', False):
-            return Response(
-                {"detail": "You don't have permissions to create posts."},
-                status=status.HTTP_403_FORBIDDEN
-            )
         return super().create(request, *args, **kwargs)
     
+    @check_permission('can_edit_posts', 'No permissions to edit posts.')
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
 
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_edit_posts', False):
-            return Response(
-                {"detail": "You don't have permissions to edit posts."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
         return super().update(request, *args, partial=partial, **kwargs)
 
-    
+    @check_permission('can_edit_posts', 'No permissions to edit posts.')
     def partial_update(self, request, *args, **kwargs):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_edit_posts', False):
-            return Response(
-                {"detail": "You don't have permissions to edit posts."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
         return super().partial_update(request, *args, **kwargs)
     
+    @check_permission('can_delete_posts', 'No permissions to delete posts.')
     def destroy(self, request, pk=None):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_delete_posts', False):
-            return Response(
-                {"detail": "You don't have permissions to delete posts."},
-                status=status.HTTP_403_FORBIDDEN
-            )
         return super().destroy(request, pk)
     
+    @check_permission('can_view_posts', 'No permissions to view posts.')
     def retrieve(self, request, pk=None):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_view_posts', False):
-            return Response(
-                {"detail": "You don't have permissions to view posts."},
-                status=status.HTTP_403_FORBIDDEN
-            )
         return super().retrieve(request, pk)
 
 
@@ -528,54 +520,45 @@ class ClientViewSet(viewsets.ModelViewSet):
             return Client.objects.all()
         else:
             return Client.objects.none()
-        
-    def create(self, request, *args, **kwargs):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_create_clients', False):
-            return Response(
-                {"detail": "You don't have permissions to create clients."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        return super().create(request, *args, **kwargs)
     
+    @check_permission('can_create_clients', 'No permissions to create clients.')
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+
+        if response.status_code == 201:
+            create_notifications_with_permissions(
+                'can_view_client_created_notifications',
+                'CLIENT',
+                CLIENT_NOTIFICATIONS['created']['title'].format(response.data.get('name')),
+                CLIENT_NOTIFICATIONS['created']['message'].format(response.data.get('name'))
+            )
+        
+        return response
+    
+    @check_permission('can_edit_clients', 'No permissions to edit clients.')
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
+        response = super().update(request, *args, partial=partial, **kwargs)
 
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_edit_clients', False):
-            return Response(
-                {"detail": "You don't have permissions to edit clients."},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        if response.status_code in [200, 202]:
+            create_notifications_with_permissions(
+                'can_view_client_updated_notifications',
+                'CLIENT',
+                CLIENT_NOTIFICATIONS['updated']['title'].format(response.data.get('name')),
+                CLIENT_NOTIFICATIONS['updated']['message']
+            )        
+        return response
 
-        return super().update(request, *args, partial=partial, **kwargs)
-
+    @check_permission('can_edit_clients', 'No permissions to edit clients.')
     def partial_update(self, request, *args, **kwargs):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_edit_clients', False):
-            return Response(
-                {"detail": "You don't have permissions to edit clients."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
         return super().partial_update(request, *args, **kwargs)
     
+    @check_permission('can_delete_clients', 'No permissions to delete clients.')
     def destroy(self, request, pk=None):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_delete_clients', False):
-            return Response(
-                {"detail": "You don't have permissions to delete clients."},
-                status=status.HTTP_403_FORBIDDEN
-            )
         return super().destroy(request, pk)
     
+    @check_permission('can_view_clients', 'No permissions to view clients.')    
     def retrieve(self, request, pk=None):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_view_clients', False):
-            return Response(
-                {"detail": "You don't have permissions to view clients."},
-                status=status.HTTP_403_FORBIDDEN
-            )
         return super().retrieve(request, pk)
     
 
@@ -596,46 +579,87 @@ class VacationViewSet(viewsets.ModelViewSet):
         if not perms.get('can_view_all_vacations', False):
             return Vacation.objects.filter(
                 assigned_user=self.request.user,
-                vacation_date__gte=one_year_ago
+                vacation_date__gte=one_year_ago,
+                status__in=['PENDING', 'CONFIRMED']
             )
-        return Vacation.objects.filter(vacation_date__gte=one_year_ago)
+        return Vacation.objects.filter(vacation_date__gte=one_year_ago, status__in=['PENDING', 'CONFIRMED'])
         
+    @check_permission('can_create_vacations', 'No permissions to create vacations.')
     def create(self, request, *args, **kwargs):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_create_vacations', False):
-            return Response(
-                {"detail": "You don't have permissions to create vacations."},
-                status=status.HTTP_403_FORBIDDEN
+        response = super().create(request, *args, **kwargs)
+
+        if response.status_code == 201:
+            if request.user.role == 'Employee':
+                create_notifications_with_permissions(
+                'can_view_vacation_created_notifications',
+                'VACATION',
+                VACATION_NOTIFICATIONS['created']['title'].format(request.user.username),
+                VACATION_NOTIFICATIONS['created']['message'].format(request.user.username)
             )
-        return super().create(request, *args, **kwargs)
-    
+        return response
+
+    @check_permission('can_edit_vacations', 'No permissions to edit vacations.')
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
 
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_edit_vacations', False):
-            return Response(
-                {"detail": "You don't have permissions to edit vacations."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
         return super().update(request, *args, partial=partial, **kwargs)
 
+    @check_permission('can_edit_vacations', 'No permissions to edit vacations.')
     def partial_update(self, request, *args, **kwargs):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_edit_vacations', False):
-            return Response(
-                {"detail": "You don't have permissions to edit vacations."},
-                status=status.HTTP_403_FORBIDDEN
+        vacation = self.get_object()
+        response = super().partial_update(request, *args, **kwargs)
+
+        if response.status_code in [200, 202]:
+            new_status = response.data.get('status')
+            notification_type = 'confirmed' if new_status == 'CONFIRMED' else 'rejected'
+            
+            create_notifications_with_permissions(
+                'can_view_vacation_updated_notifications',
+                'VACATION',
+                VACATION_NOTIFICATIONS[notification_type]['title'].format(vacation.start_date),
+                VACATION_NOTIFICATIONS[notification_type]['message'].format(vacation.user.username),
+                recipient=vacation.user
             )
 
-        return super().partial_update(request, *args, **kwargs)
+        return response
     
+    @check_permission('can_delete_vacations', 'No permissions to delete vacations.')
     def destroy(self, request, pk=None):
-        perms = RolePermissions.get_permissions_for_role(request.user.role)
-        if not perms.get('can_delete_vacations', False):
-            return Response(
-                {"detail": "You don't have permissions to delete vacations."},
-                status=status.HTTP_403_FORBIDDEN
-            )
         return super().destroy(request, pk)
+    
+
+# ------------------ NOTIFICATION VIEWS ------------------ 
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    """
+    VIEWSET FOR NOTIFICATIONS
+    """
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = Notification.objects.all()
+
+    def get_queryset(self):
+        user = self.request.user
+
+        queryset = Notification.objects.exclude(is_read=True)
+
+        if user.role == 'Boss':
+            return queryset.filter(recipient=None).order_by('-created_at')
+        else:
+            # FUTURE IMPLEMENTATION OF NOTIFICATIONS FOR EMPLOYEES
+            return queryset.filter(recipient=user).order_by('-created_at')
+
+    def create(self, request, *args, **kwargs):
+        return Response(
+            {'detail': 'Creating notifications via this endpoint is not allowed.'},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED
+        )
+
+    @action(detail=True, methods=['patch'], url_path='mark-read')
+    def mark_read(self, request, pk=None):
+        notification = self.get_object()
+
+        notification.is_read = True
+        notification.save()
+
+        return Response({'detail': 'Notification marked as read.'}, status=status.HTTP_200_OK)
