@@ -104,8 +104,8 @@ export default function ClippedDrawer(props) {
           <ListItem disablePadding>
             <ListItemButton
               component={Link}
-              to="/calculator"
-              selected={"/calculator" === path}
+              to="/reinforcementDimensioning"
+              selected={"/reinforcementDimensioning" === path}
               sx={{
                 mb: 1,
                 mx: 1,
@@ -126,7 +126,36 @@ export default function ClippedDrawer(props) {
               <ListItemIcon sx={{ color: 'inherit' }}>
                 <CalculateIcon />
               </ListItemIcon>
-              <ListItemText primary="Kalkulator" />
+              <ListItemText primary="Zginanie" />
+            </ListItemButton>
+          </ListItem>
+
+          <ListItem disablePadding>
+            <ListItemButton
+              component={Link}
+              to="/slicing"
+              selected={"/slicing" === path}
+              sx={{
+                mb: 1,
+                mx: 1,
+                borderRadius: 1,
+                color: 'text.primary',
+                '&.Mui-selected': {
+                  backgroundColor: 'violet.main',
+                  color: '#fff',
+                  '& .MuiListItemIcon-root': {
+                    color: '#fff',
+                  },
+                },
+                '&:hover': {
+                  backgroundColor: 'violet.dark',
+                },
+              }}
+            >
+              <ListItemIcon sx={{ color: 'inherit' }}>
+                <CalculateIcon />
+              </ListItemIcon>
+              <ListItemText primary="Ścinanie" />
             </ListItemButton>
           </ListItem>
 

@@ -10,13 +10,15 @@ import Clients from './components/Clients';
 import Users from './components/Users';
 import Projects from './components/Projects';
 import Tasks from './components/Tasks';
-import WymiarowanieZbrojenia from './components/WymiarowanieZbrojenia';
+import ReinforcementDimensioning from './components/ReinforcementDimensioning';
+import Slicing from './components/SlicingModule/Slicing';
 import AxiosInstance from './Axios';
 
 import { useState, useEffect } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import { darkTheme } from './theme/colors';
 import { CssBaseline } from '@mui/material';
+
 
 
 function App() {
@@ -85,7 +87,8 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/about" element={<About />} />
-              <Route path="/calculator" element={<WymiarowanieZbrojenia />} />
+              <Route path="/reinforcementDimensioning" element={<ReinforcementDimensioning />} />
+              <Route path="/slicing" element={<Slicing />} />
               <Route path="/projects" element={<Projects />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/profile" element={<Profile onLogout={handleLogout} />} />

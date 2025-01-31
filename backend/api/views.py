@@ -1,6 +1,6 @@
 from rest_framework import generics, viewsets, status
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 import uuid
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
@@ -148,10 +148,6 @@ class UserViewSet(viewsets.ModelViewSet):
     @check_permission('can_edit_password', 'No permissions to change password.')
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def change_password(self, request):
-        # perms = RolePermissions.get_permissions_for_role(request.user.role)
-        # if not perms.get('can_edit_password', False):
-        #     return Response({'detail': 'No permissions to change password.'}, status=status.HTTP_403_FORBIDDEN)
-
         user = request.user
         old_password = request.data.get('old_password')
         new_password = request.data.get('new_password')
@@ -643,11 +639,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
         queryset = Notification.objects.exclude(is_read=True)
 
-        if user.role == 'Boss':
-            return queryset.filter(recipient=None).order_by('-created_at')
-        else:
-            # FUTURE IMPLEMENTATION OF NOTIFICATIONS FOR EMPLOYEES
-            return queryset.filter(recipient=user).order_by('-created_at')
+        return queryset.filter(recipient=user).order_by('-created_at')
 
     def create(self, request, *args, **kwargs):
         return Response(

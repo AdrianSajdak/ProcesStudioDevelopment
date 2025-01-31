@@ -40,7 +40,7 @@ import {
   wymiarowanienaryse,
 } from './utils/calculations';
 
-const WymiarowanieZbrojenia = () => {
+const ReinforcementDimensioning = () => {
   const theme = useTheme();
 
   const [tabValue, setTabValue] = useState(0);
@@ -128,9 +128,10 @@ const WymiarowanieZbrojenia = () => {
   return (
     <Box
       sx={{
-        backgroundColor: theme.palette.background.default,
+        backgroundColor: theme.palette.background.paper,
         color: theme.palette.text.primary,
-        minHeight: '100vh',
+        minHeight: '50vh',
+        borderRadius: 2,
         p: 2,
         maxWidth: 800,
         margin: '0 auto',
@@ -397,4 +398,4 @@ const WymiarowanieZbrojenia = () => {
   );
 };
 
-export default WymiarowanieZbrojenia;
+export default ReinforcementDimensioning;

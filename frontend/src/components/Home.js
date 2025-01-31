@@ -62,7 +62,7 @@ function Home() {
       >
         <Button
           variant="contained"
-          onClick={() => navigate('/calculator')}
+          onClick={() => navigate('/reinforcementDimensioning')}
           sx={{
             width: '10rem',
             height: '10rem',
@@ -73,7 +73,23 @@ function Home() {
             },
           }}
         >
-          Kalkulator
+          Wymiarowanie Zbrojenia
+        </Button>
+
+        <Button
+          variant="contained"
+          onClick={() => navigate('/slicing')}
+          sx={{
+            width: '10rem',
+            height: '10rem',
+            borderRadius: '15%',
+            backgroundColor: 'violet.main',
+            color: '#fff',':hover': {
+              backgroundColor: 'violet.light',
+            },
+          }}
+        >
+          Ścinanie
         </Button>
 
         <Button
