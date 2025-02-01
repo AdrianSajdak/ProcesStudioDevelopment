@@ -26,11 +26,11 @@ import Badge from '@mui/material/Badge';
 import Footer from './Footer';
 import { Link, useLocation, useNavigate  } from 'react-router-dom';
 
-import AxiosInstance from '../Axios';
+import AxiosInstance from '../../Axios';
 import PeopleAltIcon from '@mui/icons-material/People';
 import EmojiPeopleIcon from '@mui/icons-material/EmojiPeople';
 
-import logo_ps from './images/logo_ps.png';
+import logo_ps from '../images/logo_ps.png';
 
 export default function ClippedDrawer(props) {
   const { drawerWidth, content, onLogout } = props;

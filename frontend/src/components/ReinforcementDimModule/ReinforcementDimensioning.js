@@ -18,27 +18,26 @@ import {
 import { useTheme } from '@mui/material/styles';
 
 import {
-  N,
   kN,
   m,
   cm,
   mm,
-  Pa,
-  kPa,
-  MPa,
-  GPa,
   betonData,
   stalData,
-  gammac,
-  alfacc,
-  alfact,
-  gammas,
+  gamma_c,
+  alfac_c,
+  gamma_s,
   Es,
+} from '../utils/const_variables';
+
+import {
+  calculateEffectiveDepth,
+  calculateMcr,
   wymiarowaniezginanie,
   wsppelzania,
   obliczenierysy,
   wymiarowanienaryse,
-} from './utils/calculations';
+} from './reinforcement_calculations';
 
 const ReinforcementDimensioning = () => {
   const theme = useTheme();
@@ -51,16 +50,16 @@ const ReinforcementDimensioning = () => {
   const [fck, setFck] = useState(klasaBetonu.f_ck);
   const [fctm, setFctm] = useState(klasaBetonu.f_ctm);
   const [Ecm, setEcm] = useState(klasaBetonu.E_cm);
-  const [fcd, setFcd] = useState((alfacc * klasaBetonu.f_ck) / gammac);
+  const [fcd, setFcd] = useState((alfac_c * klasaBetonu.f_ck) / gamma_c);
   const [fyk, setFyk] = useState(klasaStali.value);
-  const [fyd, setFyd] = useState(klasaStali.value / gammas);
+  const [fyd, setFyd] = useState(klasaStali.value / gamma_s);
 
   const [MSd, setMSd] = useState(0);
   const [h, setH] = useState(0 * cm);
   const [b, setB] = useState(0 * cm);
   const [cnom, setCnom] = useState(0 * mm);
   const [fi, setFi] = useState(20 * mm);
-  const [d, setD] = useState(h - cnom - fi);
+  const [d, setD] = useState(0);
 
   const [Asreq, setAsreq] = useState(1.0 * cm * cm);
   const [resultAsreq, setResultAsreq] = useState(null);
@@ -104,7 +103,7 @@ const ReinforcementDimensioning = () => {
     setFck(selectedBeton.f_ck);
     setFctm(selectedBeton.f_ctm);
     setEcm(selectedBeton.E_cm);
-    setFcd((alfacc * selectedBeton.f_ck) / gammac);
+    setFcd((alfac_c * selectedBeton.f_ck) / gamma_c);
   };
 
   const handleKlasaStaliChange = (event) => {
@@ -113,16 +112,15 @@ const ReinforcementDimensioning = () => {
     );
     setKlasaStali(selectedStal);
     setFyk(selectedStal.value);
-    setFyd(selectedStal.value / gammas);
+    setFyd(selectedStal.value / gamma_s);
   };
 
   useEffect(() => {
-    setD(h - cnom - fi);
+    setD(calculateEffectiveDepth(h, cnom, fi));
   }, [h, cnom, fi]);
 
   useEffect(() => {
-    const McrValue = (fctm * b * Math.pow(d, 2)) / 6;
-    setMcr(McrValue);
+    setMcr(calculateMcr(fctm, b, d));
   }, [fctm, b, d]);
 
   return (

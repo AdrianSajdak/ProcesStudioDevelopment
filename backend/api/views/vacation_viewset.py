@@ -45,7 +45,7 @@ class VacationViewSet(viewsets.ModelViewSet):
                     type='VACATION',
                     title_template=VACATION_NOTIFICATIONS['created']['title'],
                     message_template=VACATION_NOTIFICATIONS['created']['message'],
-                    recipient=request.user
+                    recipient=None
                 )
                 NotificationManager.create_notification(config, username=request.user.username)
             return response
@@ -73,8 +73,6 @@ class VacationViewSet(viewsets.ModelViewSet):
                 )
                 NotificationManager.create_notification(config, vacation_date=vacation.vacation_date, username=vacation.assigned_user.username)
             return response
-
-
     
     @check_permission('can_delete_vacations', 'No permissions to delete vacations.')
     def destroy(self, request, pk=None):

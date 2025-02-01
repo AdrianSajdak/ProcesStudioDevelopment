@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Box, TextField, Button, Typography } from '@mui/material';
-import AxiosInstance from '../Axios';
+import AxiosInstance from '../../Axios';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { alignProperty } from '@mui/material/styles/cssUtils';
 
-import logo_ps from '../components/images/logo_ps.png';
+import logo_ps from '../images/logo_ps.png';
 
 function Login({ onLogin }) {
   const theme = useTheme();

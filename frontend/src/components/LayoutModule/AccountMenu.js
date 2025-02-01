@@ -7,7 +7,7 @@ import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import AxiosInstance from '../Axios';
+import AxiosInstance from '../../Axios';
 import IconButton from '@mui/material/IconButton';
 import Avatar from '@mui/material/Avatar';
 

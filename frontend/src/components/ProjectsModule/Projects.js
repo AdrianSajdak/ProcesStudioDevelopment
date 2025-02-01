@@ -28,7 +28,7 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useTheme } from '@mui/material/styles';
-import AxiosInstance from '../Axios';
+import AxiosInstance from '../../Axios';
 
 // Statusy faz
 const PHASE_STATUSES = ['OPEN', 'SUSPENDED', 'CLOSED'];

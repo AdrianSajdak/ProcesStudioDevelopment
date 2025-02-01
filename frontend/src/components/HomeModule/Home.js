@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Button, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import AxiosInstance from '../Axios';
+import AxiosInstance from '../../Axios';
 
 function Home() {
   const [userData, setUserData] = useState(null);

@@ -7,7 +7,7 @@ import {
   TextField
 } from '@mui/material';
 
-import AxiosInstance from '../Axios';
+import AxiosInstance from '../../Axios';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import IconButton from '@mui/material/IconButton';
 import Dialog from '@mui/material/Dialog';

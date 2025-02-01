@@ -101,7 +101,6 @@ const Calendar = forwardRef(({ events = [], onEventClick, onEmptyDayClick }, ref
               {dayEvents.length > 0 && (
                 <div className="calendar-events-scrollable">
                   {dayEvents.map((ev) => {
-                    // 1) Jeżeli to post
                     if (ev.type === 'post') {
                       return (
                         <div
@@ -117,10 +116,8 @@ const Calendar = forwardRef(({ events = [], onEventClick, onEmptyDayClick }, ref
                       );
                     }
                     else {
-                      // ev.type === 'vacation'
-                      // status: 'PENDING' lub 'CONFIRMED'
                       const vacStatus = ev.data.status;
-                      let vacClass = 'vacation-PENDING'; // domyślnie
+                      let vacClass = 'vacation-PENDING';
                       if (vacStatus === 'CONFIRMED') {
                         vacClass = 'vacation-CONFIRMED';
                       }

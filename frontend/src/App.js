@@ -1,16 +1,16 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
-import Home from './components/Home';
-import About from './components/About';
-import NavBar from './components/NavBar';
-import Login from './components/Login';
-import Profile from './components/Profile';
-import Clients from './components/Clients';
-import Users from './components/Users';
-import Projects from './components/Projects';
-import Tasks from './components/Tasks';
-import ReinforcementDimensioning from './components/ReinforcementDimensioning';
+import Home from './components/HomeModule/Home';
+import About from './components/AboutModule/About';
+import NavBar from './components/LayoutModule/NavBar';
+import Login from './components/LoginModule/Login';
+import Profile from './components/ProfileModule/Profile';
+import Projects from './components/ProjectsModule/Projects';
+import Tasks from './components/TasksModule/Tasks';
+import Clients from './components/ClientsModule/Clients';
+import Users from './components/UsersModule/Users';
+import ReinforcementDimensioning from './components/ReinforcementDimModule/ReinforcementDimensioning';
 import Slicing from './components/SlicingModule/Slicing';
 import AxiosInstance from './Axios';
 
@@ -36,8 +36,6 @@ function App() {
     setAccessToken(null);
     setUserData(null);
   };
-
-  
 
   useEffect(() => {
     if (accessToken) {

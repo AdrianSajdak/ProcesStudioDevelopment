@@ -13,7 +13,7 @@ import {
   Grid,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import AxiosInstance from '../Axios';
+import AxiosInstance from '../../Axios';
 import { useTheme } from '@mui/material/styles';
 
 

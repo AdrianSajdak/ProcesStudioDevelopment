@@ -48,7 +48,7 @@ class TaskViewSet(viewsets.ModelViewSet):
                         message_template=TASK_NOTIFICATIONS['created']['message'],
                         recipient=task.assigned_user
                     )
-                    NotificationManager.create_notification(config, username=task.assigned_user.username)
+                    NotificationManager.create_notification(config, task_name=task.name, username=task.assigned_user.username)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
             logger.error(f"Error during task creation: {e}", exc_info=True)
