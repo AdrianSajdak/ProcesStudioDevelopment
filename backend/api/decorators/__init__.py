@@ -1,0 +1,1 @@
+from .permission_decorator import check_permission

@@ -1,7 +1,7 @@
 # PROJECT NOTIFICATIONS
 PROJECT_NOTIFICATIONS = {
     'created': {
-        'title': "Utworzono nowy projekt: {}",
+        'title': "Utworzono nowy projekt - {}",
         'message': "New project '{}' has been created."
     },
     'status_changed': {
@@ -25,8 +25,8 @@ PHASE_NOTIFICATIONS = {
 # TASK NOTIFICATIONS
 TASK_NOTIFICATIONS = {
     'created': {
-        'title': "Utworzono nowe zadanie dla użytkownika - [{}]",
-        'message': "New task was created."
+        'title': "Utworzono nowe zadanie dla Ciebie - [{}]",
+        'message': "New task was created for user - [{}]."
     },
     'status_changed': {
         'title': "Zmieniono status zadania [{}]",
@@ -59,5 +59,17 @@ VACATION_NOTIFICATIONS = {
     'rejected': {
         'title': "Odrzucono twój wniosek o urlop. Data: {}",
         'message': "Vacation request for user - {} has been rejected."
+    }
+}
+
+# USER NOTIFICATIONS
+USER_NOTIFICATIONS = {
+    'created': {
+        'title': "Utworzono nowego użytkownika - {}",
+        'message': "New user '{}' has been created."
+    },
+    'updated': {
+        'title': "Zaktualizowano dane użytkownika - {}",
+        'message': "User data has been updated."
     }
 }

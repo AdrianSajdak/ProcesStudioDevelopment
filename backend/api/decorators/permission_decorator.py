@@ -1,7 +1,7 @@
 from functools import wraps
 from rest_framework.response import Response
 from rest_framework import status
-from .permissions import RolePermissions
+from ..permissions import RolePermissions
 
 def check_permission(permission_name, error_message=None):
     def decorator(view_func):

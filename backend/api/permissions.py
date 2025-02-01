@@ -59,6 +59,8 @@ class RolePermissions:
             'can_view_project_updated_notifications': True,
             'can_view_phase_created_notifications': True,
             'can_view_phase_updated_notifications': True,
+            'can_view_user_created_notifications': True,
+            'can_view_client_created_notifications': True,
         },
         'Employee': {
             # PROJECTS
@@ -108,6 +110,8 @@ class RolePermissions:
             'can_view_project_updated_notifications': False,
             'can_view_phase_created_notifications': False,
             'can_view_phase_updated_notifications': False,
+            'can_view_user_created_notifications': False,
+            'can_view_client_created_notifications': False,
         }
     }
 
@@ -159,4 +163,5 @@ class RolePermissions:
             'can_view_project_updated_notifications': False,
             'can_view_phase_created_notifications': False,
             'can_view_phase_updated_notifications': False,
+            'can_view_client_created_notifications': False,
         })

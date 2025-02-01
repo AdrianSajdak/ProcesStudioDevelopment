@@ -108,3 +108,16 @@ class VacationAdmin(admin.ModelAdmin):
         return f"{obj.vacation_date} ({obj.duration}h)"
     get_vacation_date.short_description = 'Vacation Date'
     get_vacation_date.admin_order_field = 'vacation_date'
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ('notification_id', 'type', 'title', 'get_user', 'message', 'created_at', 'is_read')
+    list_filter = ('type', 'is_read', 'recipient__username')
+    search_fields = ('recipient__username', 'title', 'message')
+    ordering = ('-created_at',)
+    readonly_fields = ('notification_id', 'created_at',)
+    
+    def get_user(self, obj):
+        return obj.recipient.username if obj.recipient else 'No recipient'
+    get_user.short_description = 'Recipient'
+    get_user.admin_order_field = 'recipient__username'

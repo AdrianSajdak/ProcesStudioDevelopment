@@ -66,6 +66,15 @@ export default function ClippedDrawer(props) {
     fetchNotifications();
   }, []);
 
+  const NOTIFICATION_ROUTES = {
+    'TASK': '/tasks',
+    'PROJECT': '/projects',
+    'VACATION': '/tasks',
+    'PHASE': '/projects',
+    'USER': '/users',
+    'CLIENT': '/clients'
+  };
+
   const handleNotificationClick = async (notif) => {
     try {
       await AxiosInstance.patch(`/notifications/${notif.notification_id}/mark-read/`);
@@ -76,7 +85,9 @@ export default function ClippedDrawer(props) {
     setNotifications(prev => prev.filter(n => n.notification_id !== notif.notification_id));
   
     setAnchorEl(null);
-    navigate('/tasks');
+
+    const route = NOTIFICATION_ROUTES[notif.type] || '/';
+    navigate(route);
   };
 
   const changeOpenStatus = () => {

@@ -5,16 +5,16 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView
 )
 from .views import (
-    RegisterView,
-    UserViewSet,
     ProjectViewSet,
-    PhaseViewSet,
     TaskViewSet,
+    PhaseViewSet,
     PostViewSet,
     ClientViewSet,
-    CurrentUserView,
+    UserViewSet,
     VacationViewSet,
-    NotificationViewSet
+    NotificationViewSet,
+    RegisterView,
+    CurrentUserView
 )
 
 router = DefaultRouter()
