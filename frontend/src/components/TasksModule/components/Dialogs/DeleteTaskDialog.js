@@ -17,7 +17,7 @@ const DeleteTaskDialog = ({ open, task, onClose, onConfirm }) => {
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Czy na pewno usunąć zadanie?</DialogTitle>
+      <DialogTitle sx={{ textAlign: 'center' }}>Czy na pewno usunąć zadanie?</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
         <FormControlLabel
           control={
@@ -29,8 +29,18 @@ const DeleteTaskDialog = ({ open, task, onClose, onConfirm }) => {
           label="Potwierdzam usunięcie zadania"
         />
       </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose}>Anuluj</Button>
+      <DialogActions sx={{ justifyContent: 'center' }}>
+        <Button
+          onClick={handleClose}
+          variant="outlined"
+          color="violet.dark"
+          sx={{
+            color: 'violet.dark',
+            '&:hover': { color: 'violet.light' },
+          }}
+        >
+          Anuluj
+        </Button>
         <Button variant="contained" color="error" disabled={!confirmed} onClick={handleConfirm}>
           Usuń
         </Button>

@@ -1,11 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Button, Typography, Snackbar, Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import AxiosInstance from '../../Axios';
 
 function Home() {
   const [userData, setUserData] = useState(null);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    severity: 'error',
+    message: '',
+  });
   const navigate = useNavigate();
+
+  const showSnackbar = (severity, message) => {
+    setSnackbar({ open: true, severity, message });
+  };
+
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') return;
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   useEffect(() => {
     AxiosInstance.get('/users/me/')
@@ -14,6 +28,7 @@ function Home() {
       })
       .catch((error) => {
         console.error('Error fetching user data:', error);
+        showSnackbar('error', 'Błąd wczytywania danych.');
         setUserData(null);
       });
   }, []);
@@ -159,6 +174,17 @@ function Home() {
         </>
       )}
     </Box>
+
+    <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
   </Box>
 );
 }

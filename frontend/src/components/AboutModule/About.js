@@ -4,7 +4,6 @@ import {Typography, Box } from '@mui/material';
 const About = () => {
   return (
     <div>
-      {/* About Us Section */}
       <Box sx={{
         padding: '20px',
         textAlign: 'center'

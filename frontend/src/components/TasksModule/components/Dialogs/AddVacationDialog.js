@@ -1,40 +1,101 @@
 import React, { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button } from '@mui/material';
+import {
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField,
+  Button, Grid, Checkbox, FormControlLabel, MenuItem, Select,
+  InputLabel, FormControl
+} from '@mui/material';
 import { format } from 'date-fns';
+import { VACATION_TYPES } from '../Variables';
 
 const AddVacationDialog = ({ open, date, loggedInUser, onClose, onAdd }) => {
-  const [duration, setDuration] = useState('');
   const [comments, setComments] = useState('');
+  const [isMultiDay, setIsMultiDay] = useState(false);
+  const [endDate, setEndDate] = useState('');
+  const [vacationType, setVacationType] = useState('UNPAID');
 
   const handleAdd = () => {
-    const initialStatus = loggedInUser.role === 'Boss' ? 'CONFIRMED' : 'PENDING';
-    onAdd({
+    const startDateFormatted = format(date, 'yyyy-MM-dd');
+    const payload = {
       assigned_user_id: loggedInUser.user_id,
-      vacation_date: format(date, 'yyyy-MM-dd'),
-      duration,
+      start_date: startDateFormatted,
       comments,
-      status: initialStatus,
-    });
-    setDuration('');
+      status: loggedInUser.role === 'Boss' ? 'CONFIRMED' : 'PENDING',
+      type: vacationType
+    };
+
+    if (isMultiDay && endDate) {
+      payload.end_date = endDate;
+    }
+    onAdd(payload);
     setComments('');
+    setIsMultiDay(false);
+    setEndDate('');
+    setVacationType('UNPAID');
   };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Dodaj Urlop</DialogTitle>
+      <DialogTitle sx={{ textAlign: 'center' }}>Dodaj Urlop</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
         <TextField
-          label="Data urlopu"
-          value={date ? format(date, 'yyyy-MM-dd') : ''}
-          InputProps={{ readOnly: true }}
+          label="Pracownik"
+          value={loggedInUser?.username || ''}
+          disabled
+          fullWidth
+          autoFocus
+          margin="dense"
         />
-        <TextField label="Pracownik" value={loggedInUser?.username || ''} disabled />
-        <TextField
-          label="Czas trwania (h)"
-          type="number"
-          value={duration}
-          onChange={(e) => setDuration(e.target.value)}
-        />
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={6}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={isMultiDay}
+                  onChange={(e) => setIsMultiDay(e.target.checked)}
+                />
+              }
+              label="Wielodniowy urlop"
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <FormControl fullWidth>
+              <InputLabel>Typ urlopu</InputLabel>
+              <Select
+                value={vacationType}
+                label="Typ urlopu"
+                onChange={(e) => setVacationType(e.target.value)}
+              >
+                {VACATION_TYPES.map((type) => (
+                  <MenuItem key={type.value} value={type.value}>
+                    {type.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
+        
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={6}>
+            <TextField
+              label="Data rozpoczęcia"
+              value={date ? format(date, 'yyyy-MM-dd') : ''}
+              InputProps={{ readOnly: true }}
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              label="Data zakończenia"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+              disabled={!isMultiDay}
+            />
+          </Grid>
+        </Grid>
         <TextField
           label="Komentarz"
           value={comments}
@@ -45,7 +106,14 @@ const AddVacationDialog = ({ open, date, loggedInUser, onClose, onAdd }) => {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Anuluj</Button>
-        <Button variant="contained" onClick={handleAdd}>
+        <Button
+          variant="contained"
+          onClick={handleAdd}
+          sx={{
+            backgroundColor: 'violet.main',
+            '&:hover': { backgroundColor: 'violet.light' },
+          }}
+        >
           Dodaj Urlop
         </Button>
       </DialogActions>

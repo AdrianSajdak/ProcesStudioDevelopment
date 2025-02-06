@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import * as tasksApi from '../../api/tasksApi';
 
-const TASK_STATUSES = ['OPEN', 'SUSPENDED', 'CLOSED'];
+import { TASK_STATUS } from '../Variables';
 
 const AddTaskTab = ({ projects, users, onTaskAdded }) => {
   const [projectId, setProjectId] = useState('');
@@ -24,7 +24,6 @@ const AddTaskTab = ({ projects, users, onTaskAdded }) => {
 
   const handleAddTask = async () => {
     if (!projectId || !userId || !name) {
-      alert('Proszę wypełnić wymagane pola: projekt, pracownik, nazwa zadania.');
       return;
     }
     const payload = {
@@ -38,19 +37,16 @@ const AddTaskTab = ({ projects, users, onTaskAdded }) => {
     setLoading(true);
     try {
       await tasksApi.createTask(payload);
-      alert('Zadanie dodane pomyślnie!');
-      // Zerujemy pola formularza
       setProjectId('');
       setUserId('');
       setName('');
       setDescription('');
       setStatus('OPEN');
       if (onTaskAdded) {
-        onTaskAdded(); // np. odświeżenie listy zadań w nadrzędnym komponencie
+        onTaskAdded();
       }
     } catch (error) {
       console.error('Error creating task:', error);
-      alert('Nie udało się dodać zadania.');
     }
     setLoading(false);
   };
@@ -104,14 +100,10 @@ const AddTaskTab = ({ projects, users, onTaskAdded }) => {
         <Grid item xs={12} md={6}>
           <FormControl fullWidth>
             <InputLabel>Status</InputLabel>
-            <Select
-              value={status}
-              label="Status"
-              onChange={(e) => setStatus(e.target.value)}
-            >
-              {TASK_STATUSES.map((st) => (
-                <MenuItem key={st} value={st}>
-                  {st}
+            <Select value={status} label="Status" onChange={(e) => setStatus(e.target.value)}>
+              {Object.entries(TASK_STATUS).map(([key, label]) => (
+                <MenuItem key={key} value={key}>
+                  {label}
                 </MenuItem>
               ))}
             </Select>
@@ -129,7 +121,15 @@ const AddTaskTab = ({ projects, users, onTaskAdded }) => {
         </Grid>
       </Grid>
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-        <Button variant="contained" onClick={handleAddTask} disabled={loading}>
+        <Button
+          variant="contained"
+          onClick={handleAddTask}
+          disabled={loading}
+          sx={{
+            backgroundColor: 'violet.main',
+            '&:hover': { backgroundColor: 'violet.light' },
+          }}
+        >
           {loading ? 'Dodawanie...' : 'Dodaj Zadanie'}
         </Button>
       </Box>

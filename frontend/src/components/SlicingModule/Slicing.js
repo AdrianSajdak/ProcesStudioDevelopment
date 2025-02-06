@@ -52,7 +52,6 @@ const Slicing = () => {
   const [vRdC, setVRdC] = useState(null);
   const [vRdMax, setVRdMax] = useState(null);
   const [VRdC, setVRdC_kN] = useState(null);
-  const [isShearReinfNeeded, setIsShearReinfNeeded] = useState(null);
 
   // Wyniki z calcAswRequiredAndSpacing
   const [aSwReq, setASwReq] = useState(null);
@@ -231,7 +230,11 @@ const Slicing = () => {
 
         {/* Przycisk 'Oblicz' */}
         <Grid item xs={12}>
-          <Button variant="contained" onClick={handleCalculate}>
+          <Button
+            variant="contained"
+            onClick={handleCalculate}
+            sx={{ backgroundColor: 'violet.main', '&:hover': { backgroundColor: 'violet.light' } }}
+          >
             Oblicz
           </Button>
         </Grid>

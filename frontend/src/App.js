@@ -19,7 +19,8 @@ import { ThemeProvider } from '@mui/material/styles';
 import { darkTheme } from './theme/colors';
 import { CssBaseline } from '@mui/material';
 
-
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
 function App() {
   const myWidth = 200;
@@ -79,28 +80,30 @@ function App() {
   return (
     <div className="App">
       <ThemeProvider theme={darkTheme}>
-        <NavBar
-          drawerWidth={myWidth}
-          content={
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/reinforcementDimensioning" element={<ReinforcementDimensioning />} />
-              <Route path="/slicing" element={<Slicing />} />
-              <Route path="/projects" element={<Projects />} />
-              <Route path="/tasks" element={<Tasks />} />
-              <Route path="/profile" element={<Profile onLogout={handleLogout} />} />
-              <Route path="/clients"
-                element={ userRole === 'Boss' ? <Clients /> : <Navigate to="/" /> }
-              />
-              <Route path="/users"
-                element={ userRole === 'Boss' ? <Users /> : <Navigate to="/" /> }
-              />
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-          }
-          onLogout={handleLogout}
-        />
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <NavBar
+            drawerWidth={myWidth}
+            content={
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/reinforcementDimensioning" element={<ReinforcementDimensioning />} />
+                <Route path="/slicing" element={<Slicing />} />
+                <Route path="/projects" element={<Projects />} />
+                <Route path="/tasks" element={<Tasks />} />
+                <Route path="/profile" element={<Profile onLogout={handleLogout} />} />
+                <Route path="/clients"
+                  element={ userRole === 'Boss' ? <Clients /> : <Navigate to="/" /> }
+                />
+                <Route path="/users"
+                  element={ userRole === 'Boss' ? <Users /> : <Navigate to="/" /> }
+                />
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            }
+            onLogout={handleLogout}
+          />
+        </LocalizationProvider>
       </ThemeProvider>
     </div>
   );

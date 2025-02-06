@@ -13,7 +13,7 @@ import {
   MenuItem,
 } from '@mui/material';
 
-const TASK_STATUSES = ['OPEN', 'SUSPENDED', 'CLOSED'];
+import { TASK_STATUS } from '../Variables';
 
 const TaskEditDialog = ({ open, task, projects, users, onClose, onSave }) => {
   const [projectId, setProjectId] = useState('');
@@ -44,14 +44,37 @@ const TaskEditDialog = ({ open, task, projects, users, onClose, onSave }) => {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Edycja zadania</DialogTitle>
+      <DialogTitle sx={{ textAlign: 'center' }}>Edycja zadania</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-        <TextField
-          label="Nazwa zadania"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          fullWidth
-        />
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={6}>
+            <TextField
+              label="Nazwa zadania"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              fullWidth
+              autoFocus
+              margin='dense'
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <FormControl
+              fullWidth
+              autoFocus
+              margin='dense'
+            >
+              <InputLabel>Status</InputLabel>
+              <Select value={status} label="Status" onChange={(e) => setStatus(e.target.value)}>
+                {Object.entries(TASK_STATUS).map(([key, label]) => (
+                  <MenuItem key={key} value={key}>
+                    {label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
+        
         <Grid container spacing={2}>
           <Grid item xs={12} md={6}>
             <FormControl fullWidth>
@@ -94,20 +117,27 @@ const TaskEditDialog = ({ open, task, projects, users, onClose, onSave }) => {
           multiline
           rows={3}
         />
-        <FormControl fullWidth>
-          <InputLabel>Status</InputLabel>
-          <Select value={status} label="Status" onChange={(e) => setStatus(e.target.value)}>
-            {TASK_STATUSES.map((st) => (
-              <MenuItem key={st} value={st}>
-                {st}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Anuluj</Button>
-        <Button variant="contained" onClick={handleSave}>
+      <DialogActions sx={{ justifyContent: 'center' }}>
+        <Button
+          onClick={onClose}
+          variant="outlined"
+          color="violet.dark"
+          sx={{
+            color: 'violet.dark',
+            '&:hover': { color: 'violet.light' },
+          }}
+        >
+          Anuluj
+        </Button>
+        <Button
+          variant="contained"
+          sx={{
+            backgroundColor: 'violet.main',
+            '&:hover': { backgroundColor: 'violet.light' },
+          }}
+          onClick={handleSave}
+        >
           Zapisz
         </Button>
       </DialogActions>

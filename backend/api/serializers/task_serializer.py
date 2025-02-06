@@ -1,10 +1,11 @@
 from rest_framework import serializers
 from ..models import Task, Project, User
-from . import ProjectSerializer, UserSerializer
+from .project_serializer import ProjectSerializer
+from .restricted_user_serializer import RestrictedUserSerializer
 
 class TaskSerializer(serializers.ModelSerializer):
     assigned_project = ProjectSerializer(read_only=True)
-    assigned_user = UserSerializer(read_only=True)
+    assigned_user = RestrictedUserSerializer(read_only=True)
     assigned_project_id = serializers.IntegerField(write_only=True, required=True)
     assigned_user_id = serializers.IntegerField(write_only=True, required=True)
     

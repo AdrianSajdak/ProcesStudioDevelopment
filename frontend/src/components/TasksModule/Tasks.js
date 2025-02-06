@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Box, Tabs, Tab, Menu, MenuItem } from '@mui/material';
+import { Box, Tabs, Tab, Menu, MenuItem, Alert, Snackbar } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import useTasksData from './hooks/useTasksData';
 import TasksListTab from './components/Tabs/TasksListTab';
@@ -14,6 +14,7 @@ import AddPostDialog from './components/Dialogs/AddPostDialog';
 import AddVacationDialog from './components/Dialogs/AddVacationDialog';
 import VacationEditDialog from './components/Dialogs/VacationEditDialog';
 import VacationInfoDialog from './components/Dialogs/VacationInfoDialog';
+import TaskInfoDialog from './components/Dialogs/TaskInfoDialog';
 import * as tasksApi from './api/tasksApi';
 
 function Tasks() {
@@ -33,6 +34,21 @@ function Tasks() {
 
   const [tabValue, setTabValue] = useState(0);
 
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    severity: 'success',
+    message: ''
+  });
+
+  const showSnackbar = (severity, message) => {
+    setSnackbar({ open: true, severity, message });
+  };
+
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') return;
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
   // Stany dla zakładki "Lista zadań"
   const [showClosed, setShowClosed] = useState(false);
   const [projectFilter, setProjectFilter] = useState('');
@@ -51,6 +67,8 @@ function Tasks() {
   const [taskToEdit, setTaskToEdit] = useState(null);
   const [openDeleteTaskDialog, setOpenDeleteTaskDialog] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
+  const [openTaskInfoDialog, setOpenTaskInfoDialog] = useState(false);
+  const [taskInfo, setTaskInfo] = useState(null);
 
   const [openPostEditDialog, setOpenPostEditDialog] = useState(false);
   const [postToEdit, setPostToEdit] = useState(null);
@@ -87,6 +105,11 @@ function Tasks() {
   const handleTaskEdit = (task) => {
     setTaskToEdit(task);
     setOpenTaskEditDialog(true);
+  };
+
+  const handleTaskInfo = (task) => {
+    setTaskInfo(task);
+    setOpenTaskInfoDialog(true);
   };
 
   const handleTaskDelete = (task) => {
@@ -176,7 +199,18 @@ function Tasks() {
         p: 2,
       }}
     >
-      <Tabs value={tabValue} onChange={handleTabChange} textColor="inherit" sx={{ mb: 2 }}>
+      <Tabs
+        value={tabValue}
+        onChange={handleTabChange}
+        textColor="inherit"
+        sx={{ 
+          mb: 2,
+          '& .MuiTabs-flexContainer': {
+            justifyContent: 'center'
+          }
+        }}
+        TabIndicatorProps={{ style: { backgroundColor: theme.palette.violet.light } }}
+      >
         {tabLabels.map((label, idx) => (
           <Tab key={idx} label={label} />
         ))}
@@ -194,6 +228,7 @@ function Tasks() {
           postsByTask={postsByTask}
           onTaskEdit={handleTaskEdit}
           onTaskDelete={handleTaskDelete}
+          onTaskInfo={handleTaskInfo}
           onPostEdit={handlePostEdit}
           onPostDelete={handlePostDelete}
           onPostInfo={handlePostInfo}
@@ -229,12 +264,21 @@ function Tasks() {
           }}
           onEmptyDayClick={handleEmptyDayClick}
           calendarRef={calendarRef}
+          showSnackbar={showSnackbar}
         />
       )}
 
       {/* Zakładka "Dodaj Zadanie" – tylko dla Boss */}
       {tabValue === 2 && userRole === 'Boss' && (
-        <AddTaskTab projects={projects} users={users} onTaskAdded={refreshAll} />
+        <AddTaskTab
+          projects={projects}
+          users={users}
+          onTaskAdded={() => {
+            refreshAll();
+            showSnackbar('success', 'Zadanie dodane pomyślnie!');
+          }}
+          showSnackbar={showSnackbar}
+        />
       )}
 
       {/* Dialogy dla zadań */}
@@ -247,14 +291,20 @@ function Tasks() {
         onSave={async (updatedTask) => {
           try {
             await tasksApi.updateTask(taskToEdit.task_id, updatedTask);
-            alert('Zadanie zaktualizowane pomyślnie!');
+            showSnackbar('success', 'Zadanie zaktualizowane pomyślnie!');
           } catch (error) {
             console.error('Error updating task:', error);
-            alert('Nie udało się zaktualizować zadania.');
+            showSnackbar('error', 'Nie udało się zaktualizować zadania.');
           }
           setOpenTaskEditDialog(false);
           await refreshAll();
         }}
+      />
+
+      <TaskInfoDialog
+        open={openTaskInfoDialog}
+        task={taskInfo}
+        onClose={() => setOpenTaskInfoDialog(false)}
       />
 
       <DeleteTaskDialog
@@ -264,10 +314,10 @@ function Tasks() {
         onConfirm={async () => {
           try {
             await tasksApi.deleteTask(taskToDelete.task_id);
-            alert('Zadanie usunięte pomyślnie!');
+            showSnackbar('success', 'Zadanie usunięte pomyślnie!');
           } catch (error) {
             console.error('Error deleting task:', error);
-            alert('Nie udało się usunąć zadania.');
+            showSnackbar('error', 'Nie udało się usunąć zadania.');
           }
           setOpenDeleteTaskDialog(false);
           await refreshAll();
@@ -282,10 +332,10 @@ function Tasks() {
         onSave={async (updatedPost) => {
           try {
             await tasksApi.updatePost(postToEdit.post_id, updatedPost);
-            alert('Post zaktualizowany pomyślnie!');
+            showSnackbar('success', 'Post zaktualizowany pomyślnie!');
           } catch (error) {
             console.error('Error updating post:', error);
-            alert('Nie udało się zaktualizować posta.');
+            showSnackbar('error', 'Nie udało się zaktualizować posta.');
           }
           setOpenPostEditDialog(false);
           await refreshAll();
@@ -299,10 +349,10 @@ function Tasks() {
         onConfirm={async () => {
           try {
             await tasksApi.deletePost(postToDelete.post_id);
-            alert('Post usunięty pomyślnie!');
+            showSnackbar('success', 'Post usunięty pomyślnie!');
           } catch (error) {
             console.error('Error deleting post:', error);
-            alert('Nie udało się usunąć posta.');
+            showSnackbar('error', 'Nie udało się usunąć posta.');
           }
           setOpenDeletePostDialog(false);
           await refreshAll();
@@ -323,10 +373,10 @@ function Tasks() {
         onAdd={async (newPost) => {
           try {
             await tasksApi.createPost(newPost);
-            alert('Post dodany pomyślnie!');
+            showSnackbar('success', 'Post dodany pomyślnie!');
           } catch (error) {
             console.error('Error creating post:', error);
-            alert('Nie udało się dodać posta.');
+            showSnackbar('error', 'Nie udało się dodać posta.');
           }
           setOpenAddPostDialog(false);
           await refreshAll();
@@ -341,10 +391,10 @@ function Tasks() {
         onAdd={async (newVacation) => {
           try {
             await tasksApi.createVacation(newVacation);
-            alert('Urlop dodany pomyślnie!');
+            showSnackbar('success', 'Urlop dodany pomyślnie!');
           } catch (error) {
             console.error('Error creating vacation:', error);
-            alert('Nie udało się dodać urlopu.');
+            showSnackbar('error', 'Nie udało się dodać urlopu.');
           }
           setOpenAddVacationDialog(false);
           await refreshAll();
@@ -358,10 +408,10 @@ function Tasks() {
         onSave={async (updatedVacation) => {
           try {
             await tasksApi.updateVacation(vacationToEdit.vacation_id, updatedVacation);
-            alert('Urlop zaktualizowany pomyślnie!');
+            showSnackbar('success', 'Urlop zaktualizowany pomyślnie!');
           } catch (error) {
             console.error('Error updating vacation:', error);
-            alert('Nie udało się zaktualizować urlopu.');
+            showSnackbar('error', 'Nie udało się zaktualizować urlopu.');
           }
           setOpenVacationEditDialog(false);
           await refreshAll();
@@ -376,10 +426,10 @@ function Tasks() {
         onApprove={async () => {
           try {
             await tasksApi.updateVacation(vacationInfo.vacation_id, { status: 'CONFIRMED' });
-            alert('Urlop zatwierdzony pomyślnie!');
+            showSnackbar('success', 'Urlop zatwierdzony pomyślnie!');
           } catch (error) {
             console.error('Error approving vacation:', error);
-            alert('Nie udało się zatwierdzić urlopu.');
+            showSnackbar('error', 'Nie udało się zatwierdzić urlopu.');
           }
           setOpenVacationInfoDialog(false);
           await refreshAll();
@@ -387,17 +437,27 @@ function Tasks() {
         onDeny={async () => {
           try {
             await tasksApi.updateVacation(vacationInfo.vacation_id, { status: 'REJECTED' });
-            alert('Urlop odrzucony pomyślnie!');
+            showSnackbar('success', 'Urlop odrzucony pomyślnie!');
           } catch (error) {
             console.error('Error denying vacation:', error);
-            alert('Nie udało się odrzucić urlopu.');
+            showSnackbar('error', 'Nie udało się odrzucić urlopu.');
           }
           setOpenVacationInfoDialog(false);
           await refreshAll();
         }}
       />
 
-      {/* Menu dla kliknięcia w pusty dzień w kalendarzu */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+
       <Menu
         anchorEl={dayMenuAnchor}
         open={Boolean(dayMenuAnchor)}

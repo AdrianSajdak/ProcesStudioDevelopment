@@ -1,4 +1,4 @@
-import { kN, MPa, mm, cm, gamma_c, gamma_s } from "../utils/const_variables.js";
+import { MPa, mm, cm, gamma_c, gamma_s } from "../utils/const_variables.js";
 
 /**
  * Oblicza v_Rd,c (MPa),v_Rd,max (MPa) i V_Rd,c (kN).

@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from ..models import Vacation
@@ -63,17 +64,40 @@ class VacationViewSet(viewsets.ModelViewSet):
             response = super().partial_update(request, *args, **kwargs)
             if response.status_code in [200, 202]:
                 new_status = response.data.get('status')
-                notification_key = 'confirmed' if new_status == 'CONFIRMED' else 'rejected'
-                config = NotificationConfig(
-                    permission='can_view_vacation_updated_notifications',
-                    type='VACATION',
-                    title_template=VACATION_NOTIFICATIONS[notification_key]['title'],
-                    message_template=VACATION_NOTIFICATIONS[notification_key]['message'],
-                    recipient=vacation.assigned_user
-                )
-                NotificationManager.create_notification(config, vacation_date=vacation.vacation_date, username=vacation.assigned_user.username)
+                if request.user.role == 'Boss' and new_status in ['CONFIRMED', 'REJECTED']:
+                    group_id = vacation.vacation_group_id
+                    related_vacations = Vacation.objects.filter(vacation_group_id=group_id)
+                    related_vacations.update(status=new_status)
+                    notification_key = 'confirmed' if new_status == 'CONFIRMED' else 'rejected'
+                    config = NotificationConfig(
+                        permission='can_view_vacation_updated_notifications',
+                        type='VACATION',
+                        title_template=VACATION_NOTIFICATIONS[notification_key]['title'],
+                        message_template=VACATION_NOTIFICATIONS[notification_key]['message'],
+                        recipient=vacation.assigned_user
+                    )
+                    NotificationManager.create_notification(
+                        config,
+                        vacation_date=vacation.vacation_date,
+                        username=vacation.assigned_user.username
+                    )
             return response
     
     @check_permission('can_delete_vacations', 'No permissions to delete vacations.')
     def destroy(self, request, pk=None):
         return super().destroy(request, pk)
+    
+    @action(detail=False, methods=['GET'], url_path='group/(?P<group_id>[^/.]+)')
+    def by_group(self, request, group_id=None):
+        """Get vacations by group_id"""
+        if not group_id:
+            return Response(
+                {'error': 'group_id is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        vacations = self.queryset.filter(
+            vacation_group_id=group_id
+        ).values('vacation_id', 'vacation_date', 'vacation_group_id')
+        
+        return Response(vacations)

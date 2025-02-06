@@ -4,7 +4,9 @@ import {
   Typography,
   Avatar,
   Button,
-  TextField
+  TextField,
+  Snackbar,
+  Alert
 } from '@mui/material';
 
 import AxiosInstance from '../../Axios';
@@ -34,6 +36,21 @@ function Profile({ onLogout }) {
   const [passwordChangeError, setPasswordChangeError] = useState('');
   const [passwordChangeSuccess, setPasswordChangeSuccess] = useState('');
 
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    severity: 'success',
+    message: '',
+  });
+
+  const showSnackbar = (severity, message) => {
+    setSnackbar({ open: true, severity, message });
+  };
+
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') return;
+    setSnackbar({ ...snackbar, open: false });
+  };
+
   useEffect(() => {
     AxiosInstance.get('/users/me/')
       .then(response => {
@@ -43,6 +60,7 @@ function Profile({ onLogout }) {
       })
       .catch(error => {
         console.error("Error fetching user data:", error);
+        showSnackbar('error', 'Błąd wczytywania danych użytkownika.');
       });
   }, []);
 
@@ -70,11 +88,11 @@ function Profile({ onLogout }) {
       setUserData(response.data);
       setFirstName(response.data.first_name || '');
       setLastName(response.data.last_name || '');
-      alert('Profil zaktualizowano poprawnie!');
+      showSnackbar('success', 'Pomyślnie zaktualizowano profil!');
     })
     .catch(error => {
       console.error("Error updating profile:", error);
-      alert('Błąd przy aktualizacji profilu.');
+      showSnackbar('error', 'Błąd aktualizacji profilu.');
     });
   };
 
@@ -109,11 +127,14 @@ function Profile({ onLogout }) {
       .then((res) => {
         setPasswordChangeSuccess('Hasło zostało zmienione pomyślnie!');
         setPasswordChangeError('');
+        showSnackbar('success', 'Hasło zostało zmienione pomyślnie!');
+        handleChangePasswordClose();
       })
       .catch((err) => {
         console.error('Error changing password:', err);
         setPasswordChangeError('Zmiana hasła się nie udała.');
         setPasswordChangeSuccess('');
+        showSnackbar('error', 'Zmiana hasła się nie udała.');
       });
   };
 
@@ -168,7 +189,7 @@ function Profile({ onLogout }) {
             position: 'absolute',
             bottom: 0,
             right: 0,
-            bgcolor: '##636262',
+            bgcolor: '#636262',
             width: 40,
             height: 40,
             borderRadius: '50%',
@@ -285,6 +306,17 @@ function Profile({ onLogout }) {
       <Button variant="outlined" color="error" onClick={handleLogoutClick} sx={{ minWidth: 150 }}>
         Wyloguj
       </Button>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

@@ -29,7 +29,7 @@ const CalendarTab = ({
           }
           label="Ukryj urlopy"
         />
-        <FormControl sx={{ minWidth: 200 }}>
+        <FormControl sx={{ minWidth: 150 }} size="small">
           <InputLabel>Task</InputLabel>
           <Select
             value={calendarTaskFilter}
@@ -45,7 +45,7 @@ const CalendarTab = ({
           </Select>
         </FormControl>
         {userRole === 'Boss' && (
-          <FormControl sx={{ minWidth: 200 }}>
+          <FormControl sx={{ minWidth: 150 }} size="small">
             <InputLabel>Użytkownik</InputLabel>
             <Select
               value={calendarUserFilter}

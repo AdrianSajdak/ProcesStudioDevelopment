@@ -1,99 +1,187 @@
 /* Calendar.css */
 
 .calendar-container {
-    width: 100%;
-    max-width: 80rem;
-    margin: 0 auto;
-    font-family: sans-serif;
-  }
-  
-  .calendar-header {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  .calendar-header h2 {
-    margin: 0;
-  }
-  
-  .calendar-weekdays {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    text-align: center;
-    font-weight: bold;
-    margin-bottom: 0.5rem;
-  }
-  
-  .calendar-weekday {
-    padding: 0.5rem 0;
-    background-color: #303030;
-    border: 0.05rem solid #ffffff;
-  }
-  
-  .calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    grid-auto-rows: 9rem;
-    gap: 0.05rem;
-    background-color: #ddd;
-  }
-  
-  .calendar-cell {
-    background-color: #535353;
-    position: relative;
-    padding: 4px;
-    border: 0.05rem solid #ffffff;
-    cursor: pointer;
-  }
-  
-  .calendar-cell.disabled {
-    background-color: #303030;
-    color: #838383;
-  }
-  
-  .calendar-date {
-    font-size: 0.85rem;
-    font-weight: bold;
-    margin-bottom: 0.5rem;
-  }
-  
-  .calendar-events-scrollable {
-    margin-top: 0.5rem;
-    font-size: 0.8rem;
-    max-height: 6rem;
-    overflow-y: auto;
-  }
-  
-  .calendar-event {
-    background-color: #a104c9;
-    margin-bottom: 2px;
-    padding: 2px 4px;
-    border-radius: 3px;
-    cursor: pointer;
-    color: #ffffff;
-  }
+  width: 100%;
+  max-width: 80rem;
+  margin: 0 auto;
+  font-family: sans-serif;
+}
 
-  .calendar-event.post {
-    background-color: #a104c9;
-  }
+.calendar-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
 
-  .calendar-event.vacation-PENDING {
-    background-color: #f7dc6f;
-    margin-bottom: 2px;
-    padding: 2px 4px;
-    border-radius: 3px;
-    cursor: pointer;
-    color: #000000;
-  }
-  
-  .calendar-event.vacation-CONFIRMED {
-    background-color: #244b8a;
-    margin-bottom: 2px;
-    padding: 2px 4px;
-    border-radius: 3px;
-    cursor: pointer;
-    color: #ffffff;
-  }
+.calendar-header h2 {
+  margin: 0;
+}
+
+/* Pasek wyboru trybu widoku */
+.calendar-view-modes {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.calendar-view-modes button {
+  padding: 0.3rem 0.6rem;
+  border: none;
+  background-color: #303030;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.calendar-view-modes button.active {
+  background-color: #a104c9;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.calendar-weekdays.day-view {
+  display: grid;
+  grid-template-columns: 1fr;
+  max-width: 20rem;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.calendar-weekdays.day-view .calendar-weekday {
+  text-align: center;
+}
+
+.calendar-weekday {
+  padding: 0.5rem 0;
+  background-color: #303030;
+  border: 0.05rem solid #ffffff;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-auto-rows: 9rem;
+  gap: 0.05rem;
+  background-color: #ddd;
+}
+
+.calendar-grid.week {
+  grid-auto-rows: 30rem;
+}
+
+.calendar-grid.day {
+  grid-auto-rows: 35rem;
+  max-width: 20rem;
+  margin: 0 auto;
+}
+
+.calendar-cell {
+  background-color: #535353;
+  position: relative;
+  padding: 4px;
+  border: 0.05rem solid #ffffff;
+  cursor: pointer;
+}
+
+.calendar-cell.disabled {
+  background-color: #303030;
+  color: #838383;
+}
+
+.calendar-date {
+  font-size: 0.85rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.calendar-events-scrollable {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  overflow-y: auto;
+}
+
+.calendar-grid.month .calendar-events-scrollable {
+  max-height: 6rem;
+}
+
+.calendar-grid.week .calendar-events-scrollable {
+  max-height: 27rem;
+}
+
+.calendar-grid.day .calendar-events-scrollable {
+  max-height: 32rem;
+}
+
+.calendar-event {
+  background-color: #a104c9;
+  margin-bottom: 2px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  color: #ffffff;
+}
+
+.calendar-event.post {
+  background-color: #a104c9;
+}
+
+.calendar-event.vacation-PENDING {
+  background-color: #f7dc6f;
+  margin-bottom: 2px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  color: #000000;
+}
+
+.calendar-event.vacation-CONFIRMED {
+  background-color: #244b8a;
+  margin-bottom: 2px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  color: #ffffff;
+}
+
+/* Legenda kolorów */
+.calendar-legend {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+  color: #fff;
+}
+
+.legend-color {
+  width: 15px;
+  height: 15px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.legend-color.post {
+  background-color: #a104c9;
+}
+
+.legend-color.vacation-PENDING {
+  background-color: #f7dc6f;
+}
+
+.legend-color.vacation-CONFIRMED {
+  background-color: #244b8a;
+}

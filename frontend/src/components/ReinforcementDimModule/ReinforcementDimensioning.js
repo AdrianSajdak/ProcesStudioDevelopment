@@ -142,7 +142,12 @@ const ReinforcementDimensioning = () => {
         value={tabValue}
         onChange={handleTabChange}
         aria-label="tabs"
-        sx={{ marginBottom: 2 }}
+        sx={{ 
+          mb: 2,
+          '& .MuiTabs-flexContainer': {
+            justifyContent: 'center'
+          }
+        }}
         textColor="inherit"
         TabIndicatorProps={{ style: { backgroundColor: theme.palette.violet.light } }}
       >

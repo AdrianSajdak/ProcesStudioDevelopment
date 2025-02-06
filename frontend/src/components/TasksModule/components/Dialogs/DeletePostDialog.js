@@ -17,18 +17,36 @@ const DeletePostDialog = ({ open, post, onClose, onConfirm }) => {
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Czy na pewno usunąć post?</DialogTitle>
+      <DialogTitle sx={{ textAlign: 'center' }}>Czy na pewno usunąć post?</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
         <FormControlLabel
           control={
-            <Checkbox checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} />
+            <Checkbox
+              checked={confirmed}
+              onChange={(e) => setConfirmed(e.target.checked)}
+            />
           }
           label="Potwierdzam usunięcie posta"
         />
       </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose}>Anuluj</Button>
-        <Button variant="contained" color="error" disabled={!confirmed} onClick={handleConfirm}>
+      <DialogActions sx={{ justifyContent: 'center' }}>
+        <Button
+          onClick={handleClose}
+          variant="outlined"
+          color="violet.dark"
+          sx={{
+            color: 'violet.dark',
+            '&:hover': { color: 'violet.light' },
+          }}
+        >
+          Anuluj
+        </Button>
+        <Button
+          variant="contained"
+          color="error"
+          disabled={!confirmed}
+          onClick={handleConfirm}
+        >
           Usuń
         </Button>
       </DialogActions>

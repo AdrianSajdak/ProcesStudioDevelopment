@@ -94,7 +94,7 @@ class PostAdmin(admin.ModelAdmin):
 
 @admin.register(Vacation)
 class VacationAdmin(admin.ModelAdmin):
-    list_display = ('vacation_id', 'get_employee', 'get_vacation_date', 'status')
+    list_display = ('vacation_id', 'get_employee', 'get_vacation_date', 'status', 'vacation_group_id')
     list_filter = ('vacation_date', 'assigned_user__username', 'status')
     search_fields = ('assigned_user__username', 'vacation_date')
     ordering = ('assigned_user__username', 'vacation_date',)

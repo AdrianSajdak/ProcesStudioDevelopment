@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Grid } from '@mui/material';
 
 const VacationEditDialog = ({ open, vacation, onClose, onSave }) => {
   const [vacationDate, setVacationDate] = useState('');
@@ -20,21 +20,33 @@ const VacationEditDialog = ({ open, vacation, onClose, onSave }) => {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Edycja urlopu</DialogTitle>
+      <DialogTitle sx={{ textAlign: 'center' }}>Edycja urlopu</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-        <TextField
-          label="Data urlopu"
-          type="date"
-          value={vacationDate}
-          onChange={(e) => setVacationDate(e.target.value)}
-          InputLabelProps={{ shrink: true }}
-        />
-        <TextField
-          label="Czas trwania (h)"
-          type="number"
-          value={duration}
-          onChange={(e) => setDuration(e.target.value)}
-        />
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={6}>
+            <TextField
+              label="Data urlopu"
+              type="date"
+              value={vacationDate}
+              onChange={(e) => setVacationDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              autoFocus
+              margin='dense'
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              label="Czas trwania (h)"
+              type="number"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              margin='dense'
+              autoFocus
+              fullWidth
+            />
+          </Grid>
+        </Grid>
         <TextField
           label="Komentarz"
           value={comments}
@@ -45,7 +57,11 @@ const VacationEditDialog = ({ open, vacation, onClose, onSave }) => {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Anuluj</Button>
-        <Button variant="contained" onClick={handleSave}>
+        <Button
+          variant="contained"
+          onClick={handleSave}
+          sx={{ backgroundColor: 'violet.main', '&:hover': { backgroundColor: 'violet.light' } }}
+        >
           Zapisz
         </Button>
       </DialogActions>

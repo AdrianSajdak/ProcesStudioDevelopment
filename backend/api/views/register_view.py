@@ -6,8 +6,14 @@ from rest_framework.permissions import IsAuthenticated
 from ..serializers import RegisterSerializer
 from ..decorators import check_permission
 from ..notification import USER_NOTIFICATIONS, NotificationConfig, NotificationManager
+import os
+import uuid
 
 logger = logging.getLogger(__name__)
+
+def generate_unique_filename(filename):
+    ext = os.path.splitext(filename)[1]
+    return f"{uuid.uuid4()}{ext}"
 
 # ------------------ REGISTRATION ------------------
 class RegisterView(generics.CreateAPIView):
@@ -19,6 +25,13 @@ class RegisterView(generics.CreateAPIView):
 
     @check_permission('can_create_users', 'No permissions to create users.')
     def post(self, request, *args, **kwargs):
+        if 'profile_picture' in request.FILES:
+            file = request.FILES['profile_picture']
+            file.name = generate_unique_filename(file.name)
+        if 'contract_file' in request.FILES:
+            file = request.FILES['contract_file']
+            file.name = generate_unique_filename(file.name)
+
         serializer = self.get_serializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)

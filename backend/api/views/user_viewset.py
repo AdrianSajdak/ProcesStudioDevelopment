@@ -7,9 +7,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from ..models import User
-from ..serializers import UserSerializer
+from ..serializers import UserSerializer, RestrictedUserSerializer
 from ..permissions import RolePermissions
 from ..decorators import check_permission
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +19,8 @@ ALLOWED_TYPES = ['image/jpeg', 'image/png']
 MAX_FILE_SIZE = 2 * 1024 * 1024
 
 def generate_unique_filename(filename):
-    extension = filename.split('.')[-1]
-    return f"{uuid.uuid4()}.{extension}"
+    ext = os.path.splitext(filename)[1]
+    return f"{uuid.uuid4()}{ext}"
 
 
 # ------------------ USER VIEWS ------------------
@@ -28,8 +29,16 @@ class UserViewSet(viewsets.ModelViewSet):
     VIEWSET FOR USERS (CRUD OPERATIONS)
     """
     permission_classes = [IsAuthenticated]
-    serializer_class = UserSerializer
     
+    def get_serializer_class(self):
+        # Dla operacji update/partial_update używamy pełnego serializera
+        if self.action in ['update', 'partial_update']:
+            return UserSerializer
+        # Jeśli użytkownik jest superuserem, używamy pełnego serializera
+        if self.request.user.is_superuser:
+            return UserSerializer
+        return RestrictedUserSerializer
+
     def get_queryset(self):
         perms = RolePermissions.get_permissions_for_role(self.request.user.role)
         if not perms['can_view_users']:
@@ -47,7 +56,7 @@ class UserViewSet(viewsets.ModelViewSet):
     @check_permission('can_view_users', 'No permissions to view users.')
     def list(self, request):
         queryset = self.get_queryset()
-        serializer = self.serializer_class(queryset, many=True)
+        serializer = self.get_serializer_class()(queryset, many=True)
         return Response(serializer.data)
 
     def create(self, request):
@@ -59,24 +68,46 @@ class UserViewSet(viewsets.ModelViewSet):
     @check_permission('can_view_users', 'No permissions to view users.')
     def retrieve(self, request, pk=None):
         user = self.get_object()
-        serializer = self.serializer_class(user)
+        serializer = self.get_serializer_class()(user)
         return Response(serializer.data)
     
     @check_permission('can_edit_users', 'No permissions to edit users.')
-    def update(self, request, pk=None):
+    def update(self, request, *args, **kwargs):
         user = self.get_object()
-        serializer = self.serializer_class(user, data=request.data, partial=False)
 
+        data = request.data.copy()
+
+        if 'profile_picture' in request.FILES:
+            file_obj = request.FILES['profile_picture']
+            file_obj.name = generate_unique_filename(file_obj.name)
+            data['profile_picture'] = file_obj
+        if 'contract_file' in request.FILES:
+            file_obj = request.FILES['contract_file']
+            file_obj.name = generate_unique_filename(file_obj.name)
+            data['contract_file'] = file_obj
+
+        # Używamy get_serializer, który może mieć dodatkowe zachowania skonfigurowane
+        serializer = self.get_serializer_class()(user, data=data, partial=False)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     @check_permission('can_edit_users', 'No permissions to edit users.')
-    def partial_update(self, request, pk=None):
+    def partial_update(self, request, *args, **kwargs):
         user = self.get_object()
-        serializer = self.serializer_class(user, data=request.data, partial=True)
 
+        data = request.data.copy()
+        if 'profile_picture' in request.FILES:
+            file_obj = request.FILES['profile_picture']
+            file_obj.name = generate_unique_filename(file_obj.name)
+            data['profile_picture'] = file_obj
+        if 'contract_file' in request.FILES:
+            file_obj = request.FILES['contract_file']
+            file_obj.name = generate_unique_filename(file_obj.name)
+            data['contract_file'] = file_obj
+
+        serializer = self.get_serializer_class()(user, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -112,7 +143,7 @@ class UserViewSet(viewsets.ModelViewSet):
         file = request.FILES.get('profile_picture')
 
         if file:
-            mime_type = mimetypes.guess_type(file.name)[0]
+            mime_type = file.content_type
             if mime_type not in ALLOWED_TYPES:
                 return Response({'detail': 'Invalid file type. Allowed types: JPEG, PNG'}, status=status.HTTP_400_BAD_REQUEST)
             
@@ -121,8 +152,13 @@ class UserViewSet(viewsets.ModelViewSet):
 
             file.name = generate_unique_filename(file.name)
         
-        allowed_fields = ['profile_picture', 'first_name', 'last_name']
-        data = {key: request.data.get(key) for key in allowed_fields if request.data.get(key)}
+        data = {}
+        if file:
+            data['profile_picture'] = file
+        if request.data.get('first_name'):
+            data['first_name'] = request.data.get('first_name')
+        if request.data.get('last_name'):
+            data['last_name'] = request.data.get('last_name')
 
         serializer = self.get_serializer(user, data=data, partial=True)
         if serializer.is_valid():

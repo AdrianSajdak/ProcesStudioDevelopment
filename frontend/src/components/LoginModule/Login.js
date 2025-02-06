@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, Typography } from '@mui/material';
+import { Box, TextField, Button, Typography, Snackbar, Alert } from '@mui/material';
 import AxiosInstance from '../../Axios';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
-import { alignProperty } from '@mui/material/styles/cssUtils';
 
 import logo_ps from '../images/logo_ps.png';
 
@@ -13,7 +12,21 @@ function Login({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error] = useState('');
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    severity: 'error',
+    message: '',
+  });
   const navigate = useNavigate();
+
+  const showSnackbar = (severity, message) => {
+    setSnackbar({ open: true, severity, message });
+  };
+
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') return;
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -31,7 +44,7 @@ function Login({ onLogin }) {
       navigate('/');
     } catch (error) {
       console.error('Login error:', error);
-      alert('Invalid credentials');
+      showSnackbar('error', 'Błędne dane logowania.');
     }
   }
 
@@ -99,6 +112,17 @@ function Login({ onLogin }) {
           Zaloguj
         </Button>
       </Box>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

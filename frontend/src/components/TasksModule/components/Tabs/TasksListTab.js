@@ -1,24 +1,29 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   Typography,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
   IconButton,
-  Checkbox,
   FormControl,
-  FormControlLabel,
   InputLabel,
   Select,
   MenuItem as MUIMenuItem,
+  Checkbox,
+  FormControlLabel,
   Grid,
-  Menu,
-  MenuItem,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import InfoIcon from '@mui/icons-material/Info';
+import { parseISO, format } from 'date-fns';
+import { pl } from 'date-fns/locale';
+  
 const TasksListTab = ({
   tasks,
   projects,
@@ -28,6 +33,7 @@ const TasksListTab = ({
   onExpandTask,
   postsByTask,
   onTaskEdit,
+  onTaskInfo,
   onTaskDelete,
   onPostEdit,
   onPostDelete,
@@ -39,38 +45,24 @@ const TasksListTab = ({
   userFilter,
   setUserFilter,
 }) => {
-  // Menu dla zadań (tylko dla Boss)
-  const [taskMenuAnchor, setTaskMenuAnchor] = useState(null);
-  const [selectedTaskForMenu, setSelectedTaskForMenu] = useState(null);
-  // Menu dla postów (dla wszystkich)
-  const [postMenuAnchor, setPostMenuAnchor] = useState(null);
-  const [selectedPostForMenu, setSelectedPostForMenu] = useState(null);
+  const filteredTasks = tasks.filter((task) => {
+    let valid = true;
+    if (!showClosed && task.status === 'CLOSED') valid = false;
+    if (projectFilter && task.assigned_project?.project_id !== Number(projectFilter))
+      valid = false;
+    if (userRole === 'Boss' && userFilter && task.assigned_user?.user_id !== Number(userFilter))
+      valid = false;
+    return valid;
+  });
 
-  const handleTaskMenuClick = (e, task) => {
-    e.stopPropagation();
-    setTaskMenuAnchor(e.currentTarget);
-    setSelectedTaskForMenu(task);
-  };
-
-  const handleCloseTaskMenu = () => {
-    setTaskMenuAnchor(null);
-    setSelectedTaskForMenu(null);
-  };
-
-  const handlePostMenuClick = (e, post) => {
-    e.stopPropagation();
-    setPostMenuAnchor(e.currentTarget);
-    setSelectedPostForMenu(post);
-  };
-
-  const handleClosePostMenu = () => {
-    setPostMenuAnchor(null);
-    setSelectedPostForMenu(null);
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    const date = parseISO(dateString);
+    return format(date, 'yyyy.MM.dd [HH:mm:ss]', { locale: pl });
   };
 
   return (
     <Box sx={{ mt: 3 }}>
-      {/* Filtry */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
         <FormControlLabel
           control={
@@ -81,7 +73,7 @@ const TasksListTab = ({
           }
           label="Pokaż zakończone"
         />
-        <FormControl sx={{ minWidth: 200 }}>
+        <FormControl sx={{ minWidth: 150 }} size="small">
           <InputLabel>Projekt</InputLabel>
           <Select
             value={projectFilter}
@@ -96,9 +88,8 @@ const TasksListTab = ({
             ))}
           </Select>
         </FormControl>
-        {/* Filtr użytkownika tylko dla Boss */}
         {userRole === 'Boss' && (
-          <FormControl sx={{ minWidth: 200 }}>
+          <FormControl sx={{ minWidth: 150 }} size="small">
             <InputLabel>Użytkownik</InputLabel>
             <Select
               value={userFilter}
@@ -115,173 +106,173 @@ const TasksListTab = ({
           </FormControl>
         )}
       </Box>
-      <Grid container spacing={2} sx={{ minHeight: 500 }}>
-        {/* Lewa kolumna – lista zadań */}
-        <Grid item xs={12} md={6}>
+      
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={9}>
           <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
             Lista zadań
           </Typography>
-          {tasks
-            .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
-            .map((task) => (
-              <Accordion
-                key={task.task_id}
-                expanded={expandedTaskId === task.task_id}
-                onChange={(_, isExpanded) => onExpandTask(task.task_id, isExpanded)}
-                sx={{ mb: 1, borderLeft: '5px solid #7A0099' }}
-              >
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Box
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ backgroundColor: 'violet.main', outline: '1px solid' }}>
+                  <TableCell>Nazwa</TableCell>
+                  <TableCell>Projekt</TableCell>
+                  <TableCell>Użytkownik</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Data utworzenia</TableCell>
+                  <TableCell>Data modyfikacji</TableCell>
+                  {userRole === 'Boss' && (
+                    <TableCell>Akcje</TableCell>
+                  )}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredTasks.map((task) => (
+                  <TableRow
+                    key={task.task_id}
+                    onClick={() => onExpandTask(task.task_id, true)}
                     sx={{
-                      display: 'flex',
-                      width: '100%',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
+                      cursor: 'pointer',
+                      backgroundColor:
+                        expandedTaskId === task.task_id ? 'rgba(0,0,0,0.08)' : 'inherit',
+                      '&:hover': { backgroundColor: 'rgba(0,0,0,0.1)' },
+                      outline: '1px solid',
                     }}
                   >
-                    <Typography
-                      sx={{
-                        whiteSpace: 'pre-wrap',
-                        wordWrap: 'break-word',
-                        overflowWrap: 'anywhere',
-                      }}
-                    >
-                      {task.name}
-                    </Typography>
+                    <TableCell>{task.name}</TableCell>
+                    <TableCell>{task.assigned_project?.name || '-'}</TableCell>
+                    <TableCell>{task.assigned_user?.username || '-'}</TableCell>
+                    <TableCell>{task.status}</TableCell>
+                    <TableCell>
+                      {task.created_date
+                        ? new Date(task.created_date).toLocaleDateString()
+                        : '-'}
+                    </TableCell>
+                    <TableCell>{formatDate(task.last_modification_date)}</TableCell>
                     {userRole === 'Boss' && (
-                      <IconButton
-                        size="small"
-                        onClick={(e) => handleTaskMenuClick(e, task)}
-                      >
-                        <MoreVertIcon />
-                      </IconButton>
-                    )}
-                  </Box>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Typography sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-                    Opis: {task.description || '-'}
-                  </Typography>
-                  <Typography>Status: {task.status}</Typography>
-                  <Typography>Godziny pracy: {task.total_hours}</Typography>
-                  <Typography>Projekt: {task.assigned_project?.name || '-'}</Typography>
-                  <Typography>
-                    Użytkownik: {task.assigned_user?.username || '-'}
-                  </Typography>
-                </AccordionDetails>
-              </Accordion>
-            ))}
-        </Grid>
-
-        {/* Prawa kolumna – lista postów dla rozwiniętego zadania */}
-        <Grid item xs={12} md={6}>
-          <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
-            Lista postów
-          </Typography>
-          {expandedTaskId ? (
-            postsByTask[expandedTaskId] && postsByTask[expandedTaskId].length > 0 ? (
-              postsByTask[expandedTaskId]
-                .sort((a, b) => new Date(b.post_date) - new Date(a.post_date))
-                .map((post) => (
-                  <Accordion key={post.post_id} sx={{ mb: 1 }}>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          width: '100%',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            whiteSpace: 'pre-wrap',
-                            wordWrap: 'break-word',
-                            overflowWrap: 'anywhere',
-                          }}
-                        >
-                          Data: {new Date(post.post_date).toLocaleDateString()} • Godziny: {post.work_hours}
-                        </Typography>
+                      <TableCell>
                         <IconButton
                           size="small"
-                          onClick={(e) => handlePostMenuClick(e, post)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onTaskEdit(task);
+                          }}
+                          sx={{ '&:hover': { color: 'violet.main' } }}
                         >
-                          <MoreVertIcon />
+                          <EditIcon />
                         </IconButton>
-                      </Box>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      {post.comment && (
-                        <Typography sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-                          Komentarz: {post.comment}
-                        </Typography>
-                      )}
-                      {post.assigned_task && (
-                        <Typography>Zadanie: {post.assigned_task.name}</Typography>
-                      )}
-                    </AccordionDetails>
-                  </Accordion>
-                ))
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onTaskDelete(task);
+                          }}
+                          sx={{ '&:hover': { color: 'violet.main' } }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                        {typeof onTaskInfo === 'function' && (
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onTaskInfo(task);
+                            }}
+                            sx={{ '&:hover': { color: 'violet.main' } }}
+                          >
+                            <InfoIcon />
+                          </IconButton>
+                        )}
+                      </TableCell>
+                    )}
+                    
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          {expandedTaskId && (
+            <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
+              Zadanie: {tasks.find((t) => t.task_id === expandedTaskId)?.name}
+            </Typography>
+          )}
+          
+          {expandedTaskId ? (
+            postsByTask[expandedTaskId] && postsByTask[expandedTaskId].length > 0 ? (
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ backgroundColor: 'violet.main', outline: '1px solid' }}>
+                      <TableCell>Data</TableCell>
+                      <TableCell>Godziny</TableCell>
+                      <TableCell>Akcje</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {postsByTask[expandedTaskId]
+                      .sort((a, b) => new Date(b.post_date) - new Date(a.post_date))
+                      .map((post) => (
+                        <TableRow
+                          key={post.post_id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onPostInfo(post);
+                          }}
+                          sx={{
+                            cursor: 'pointer',
+                            '&:hover': { backgroundColor: 'rgba(0,0,0,0.1)' },
+                            outline: '1px solid',
+                          }}
+                        >
+                          <TableCell>
+                            {post.post_date
+                              ? new Date(post.post_date).toLocaleDateString()
+                              : '-'}
+                          </TableCell>
+                          <TableCell>{post.work_hours}</TableCell>
+                          <TableCell>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onPostEdit(post);
+                              }}
+                              sx={{ '&:hover': { color: 'violet.main' } }}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onPostDelete(post);
+                              }}
+                              sx={{ '&:hover': { color: 'violet.main' } }}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             ) : (
-              <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
+              <Typography variant="body1" sx={{ textAlign: 'center', mt: 2 }}>
                 Brak postów dla tego zadania
               </Typography>
             )
           ) : (
-            <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
-              Wybierz zadanie, aby zobaczyć posty
+            <Typography variant="body1" sx={{ textAlign: 'center', mt: 2 }}>
+              Wybierz zadanie z listy, aby zobaczyć posty
             </Typography>
           )}
         </Grid>
       </Grid>
-
-      {/* Menu dla zadań */}
-      <Menu
-        anchorEl={taskMenuAnchor}
-        open={Boolean(taskMenuAnchor)}
-        onClose={handleCloseTaskMenu}
-      >
-        <MenuItem
-          onClick={() => {
-            onTaskEdit(selectedTaskForMenu);
-            handleCloseTaskMenu();
-          }}
-        >
-          Edytuj Zadanie
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            onTaskDelete(selectedTaskForMenu);
-            handleCloseTaskMenu();
-          }}
-        >
-          Usuń Zadanie
-        </MenuItem>
-      </Menu>
-
-      {/* Menu dla postów */}
-      <Menu
-        anchorEl={postMenuAnchor}
-        open={Boolean(postMenuAnchor)}
-        onClose={handleClosePostMenu}
-      >
-        <MenuItem
-          onClick={() => {
-            onPostEdit(selectedPostForMenu);
-            handleClosePostMenu();
-          }}
-        >
-          Edytuj post
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            onPostDelete(selectedPostForMenu);
-            handleClosePostMenu();
-          }}
-        >
-          Usuń post
-        </MenuItem>
-      </Menu>
     </Box>
   );
 };

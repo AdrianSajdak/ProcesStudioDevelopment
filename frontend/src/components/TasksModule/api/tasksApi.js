@@ -50,6 +50,16 @@ export const fetchVacations = async () => {
   }
 };
 
+export const fetchVacationsByGroupId = async (groupId) => {
+  try {
+    const res = await AxiosInstance.get(`/vacations/group/${groupId}/`);
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching vacations by group:", error);
+    throw error;
+  }
+};
+
 export const fetchPosts = async () => {
   try {
     const res = await AxiosInstance.get('/posts/');

@@ -28,9 +28,10 @@ class RolePermissions:
             'can_edit_tasks': True,
             'can_delete_tasks': False,
             # USERS
+            'can_view_confidential_informations_users': True,
             'can_view_users': True,
             'can_create_users': True,
-            'can_edit_users': False,
+            'can_edit_users': True,
             'can_delete_users': False,
             "can_edit_password": True,
             # POSTS
@@ -79,6 +80,7 @@ class RolePermissions:
             'can_edit_tasks': False,
             'can_delete_tasks': False,
             # USERS
+            'can_view_confidential_informations_users': False,
             'can_view_users': False,
             'can_create_users': False,
             'can_edit_users': False,
@@ -89,7 +91,7 @@ class RolePermissions:
             'can_view_own_posts': True,
             'can_create_posts': True,
             'can_edit_posts': True,
-            'can_delete_posts': False,
+            'can_delete_posts': True,
             # CLIENTS
             'can_view_clients': False,
             'can_create_clients': False,
@@ -134,6 +136,7 @@ class RolePermissions:
             'can_edit_tasks': False,
             'can_delete_tasks': False,
             # USERS
+            'can_view_confidential_informations_users': False,
             'can_create_users': False,
             'can_edit_users': False,
             'can_delete_users': False,
