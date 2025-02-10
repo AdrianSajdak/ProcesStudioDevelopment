@@ -14,6 +14,9 @@ import {
   Typography,
   Menu,
   MenuItem,
+  Checkbox,
+  Divider,
+  Button,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import CalculateIcon from '@mui/icons-material/Calculate';
@@ -40,6 +43,7 @@ export default function ClippedDrawer(props) {
   const [open, setOpen] = React.useState(false);
   const [userRole, setUserRole] = useState(null);
 
+  const [selectedNotifications, setSelectedNotifications] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -51,6 +55,31 @@ export default function ClippedDrawer(props) {
       setNotifications(res.data);
     } catch (err) {
       console.error('Error fetching notifications:', err);
+    }
+  };
+
+  const handleCheckboxChange = (notificationId) => {
+    setSelectedNotifications(prev => 
+      prev.includes(notificationId) 
+        ? prev.filter(id => id !== notificationId)
+        : [...prev, notificationId]
+    );
+  };
+
+  const handleMarkSelectedAsRead = async () => {
+    try {
+      await Promise.all(
+        selectedNotifications.map(id =>
+          AxiosInstance.patch(`/notifications/${id}/mark-read/`)
+        )
+      );
+      
+      setNotifications(prev => 
+        prev.filter(n => !selectedNotifications.includes(n.notification_id))
+      );
+      setSelectedNotifications([]);
+    } catch (err) {
+      console.error('Error marking notifications as read:', err);
     }
   };
 
@@ -355,7 +384,12 @@ export default function ClippedDrawer(props) {
             <img
               src={logo_ps}
               alt="logo"
-              style={{ width: '50px', height: '25px' }}
+              onClick={() => navigate('/home')}
+              style={{ 
+                width: '50px', 
+                height: '25px',
+                cursor: 'pointer' 
+              }}
             />
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -373,14 +407,52 @@ export default function ClippedDrawer(props) {
               {notifications.length === 0 ? (
                 <MenuItem>Brak powiadomień</MenuItem>
               ) : (
-                notifications.map((notif) => (
-                  <MenuItem
-                    key={notif.notification_id}
-                    onClick={() => handleNotificationClick(notif)}
+                <>
+                  <Typography
+                    sx={{
+                      p: 2,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      borderBottom: '1px solid rgba(0,0,0,0.12)'
+                    }}
                   >
-                    {notif.title}
+                    Powiadomienia
+                  </Typography>
+                  {notifications.map((notif) => (
+                    <MenuItem
+                      key={notif.notification_id}
+                      onClick={(e) => e.stopPropagation()}
+                      sx={{ display: 'flex', alignItems: 'center' }}
+                    >
+                      <Checkbox
+                        checked={selectedNotifications.includes(notif.notification_id)}
+                        onChange={() => handleCheckboxChange(notif.notification_id)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <Typography 
+                        onClick={() => handleNotificationClick(notif)}
+                        sx={{ cursor: 'pointer' }}
+                      >
+                        {notif.title}
+                      </Typography>
+                    </MenuItem>
+                  ))}
+                  <Divider />
+                  <MenuItem>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      disabled={selectedNotifications.length === 0}
+                      onClick={handleMarkSelectedAsRead}
+                      sx={{
+                        backgroundColor: 'violet.main',
+                        '&:hover': { backgroundColor: 'violet.light' },
+                      }}
+                    >
+                      Oznacz jako odczytane ({selectedNotifications.length})
+                    </Button>
                   </MenuItem>
-                ))
+                </>
               )}
             </Menu>
 

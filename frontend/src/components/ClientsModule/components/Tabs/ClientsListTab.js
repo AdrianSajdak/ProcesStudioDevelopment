@@ -70,7 +70,9 @@ const ClientListTab = ({ clientsList, showSnackbar, onClientUpdated, loggedInUse
               <TableCell>NIP</TableCell>
               <TableCell>Kontakt</TableCell>
               <TableCell>Adres</TableCell>
-              <TableCell align="center">Akcje</TableCell>
+              {loggedInUser?.is_superuser && (
+                <TableCell>Akcje</TableCell>
+              )}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -95,8 +97,8 @@ const ClientListTab = ({ clientsList, showSnackbar, onClientUpdated, loggedInUse
                     {client.contact_email || '-'}
                   </TableCell>
                   <TableCell>{address}</TableCell>
-                  <TableCell align="center">
-                    {loggedInUser?.is_superuser && (
+                  {loggedInUser?.is_superuser && (
+                    <TableCell>
                       <IconButton
                         onClick={(event) => {
                           event.stopPropagation();
@@ -107,8 +109,8 @@ const ClientListTab = ({ clientsList, showSnackbar, onClientUpdated, loggedInUse
                       >
                         <EditIcon />
                       </IconButton>
-                    )}
-                  </TableCell>
+                    </TableCell>
+                  )}
                 </TableRow>
               );
             })}

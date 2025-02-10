@@ -30,9 +30,6 @@ const PostInfoDialog = ({ open, post, onClose }) => {
     <Dialog open={open} onClose={onClose} maxWidth="sm">
       <DialogTitle sx={{ textAlign: 'center' }}>Szczegóły Posta</DialogTitle>
       <DialogContent dividers>
-        <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6">{post.name}</Typography>
-        </Box>
         <TableContainer component={Paper} sx={{ maxWidth: 450, margin: '0 auto' }}>
           <Table size="small">
             <TableBody>

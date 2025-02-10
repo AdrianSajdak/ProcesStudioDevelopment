@@ -41,7 +41,7 @@ const AddProjectTab = ({ clients, onAddProject, showSnackbar }) => {
     try {
       await projectsApi.createProject({
         name,
-        assignedClient,
+        assigned_client_id: assignedClient,
         type,
         status,
         city,
@@ -72,8 +72,7 @@ const AddProjectTab = ({ clients, onAddProject, showSnackbar }) => {
 
   return (
     <Box
-      component="form"
-      onSubmit={handleAddProject}
+      type="form"
       sx={{
         mt: 3,
         maxWidth: 600,
@@ -192,6 +191,7 @@ const AddProjectTab = ({ clients, onAddProject, showSnackbar }) => {
       </Grid>
       <Button
         type="submit"
+        onClick={handleAddProject}
         variant="contained"
         sx={{
           backgroundColor: 'violet.main',

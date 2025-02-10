@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import AxiosInstance from '../../Axios';
 import IconButton from '@mui/material/IconButton';
 import Avatar from '@mui/material/Avatar';
+import { getFileUrl } from '../../fileUrl';
 
 
 function AccountMenu({ onLogout }) {
@@ -44,10 +45,7 @@ function AccountMenu({ onLogout }) {
     handleClose();
   };
 
-  let profilePictureUrl = null;
-  if (userData && userData.profile_picture) {
-    profilePictureUrl = `${AxiosInstance.defaults.baseURL.replace('/api','')}${userData.profile_picture}`;
-  }
+  const profilePictureUrl = userData ? getFileUrl(userData.profile_picture) : null;
 
   return (
     <div>
