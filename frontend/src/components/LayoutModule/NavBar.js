@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Box,
   Drawer,
@@ -47,16 +47,69 @@ export default function ClippedDrawer(props) {
   const [notifications, setNotifications] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
 
-  const navigate = useNavigate();
+  const [socket, setSocket] = useState(null);
+  const socketRef = useRef(null);
 
-  const fetchNotifications = async () => {
+  const setupWebSocket = async () => {
     try {
-      const res = await AxiosInstance.get('/notifications/');
-      setNotifications(res.data);
-    } catch (err) {
-      console.error('Error fetching notifications:', err);
+      await AxiosInstance.post('/token/verify/', { token: sessionStorage.getItem('accessToken') });
+
+      const tokenResponse = await AxiosInstance.get('/notifications/get_ws_token/');
+      
+      const encodedToken = encodeURIComponent(tokenResponse.data.ws_token);
+
+      if (!socketRef.current) {
+        socketRef.current = new WebSocket(`ws://localhost:8000/ws/notifications/?token=${encodedToken}`);
+        
+        socketRef.current.onopen = () => {
+          console.log('WebSocket connected');
+        };
+        
+        socketRef.current.onmessage = (e) => {
+          const notification = JSON.parse(e.data);
+          // Upewnij się, że nie dodajesz duplikatu – np. przez sprawdzenie unikalnego identyfikatora:
+          setNotifications(prev => {
+            if (prev.find(n => n.notification_id === notification.notification_id)) {
+              return prev;
+            }
+            return [notification, ...prev];
+          });
+        };
+
+        socketRef.current.onerror = (error) => {
+          console.error('WebSocket error:', error);
+        };
+
+        socketRef.current.onclose = () => {
+          console.warn('WebSocket closed, retrying in 5s');
+          socketRef.current = null;
+          setTimeout(setupWebSocket, 5000);
+        };
+      }
+    } catch (error) {
+      console.error('Error setting up WebSocket:', error);
+      setTimeout(setupWebSocket, 5000);
     }
   };
+  useEffect(() => {
+    AxiosInstance.get('/notifications/')
+      .then(response => {
+        console.log("Fetched notifications:", response.data);
+        setNotifications(response.data);
+      })
+      .catch(error => console.error("Error fetching notifications:", error));
+  }, []);
+
+  useEffect(() => {
+    setupWebSocket();
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.close();
+      }
+    };
+  }, []);
+
+  const navigate = useNavigate();
 
   const handleCheckboxChange = (notificationId) => {
     setSelectedNotifications(prev => 
@@ -92,7 +145,6 @@ export default function ClippedDrawer(props) {
       .catch((error) => {
         console.error('Error fetching user data:', error);
       });
-    fetchNotifications();
   }, []);
 
   const NOTIFICATION_ROUTES = {

@@ -2,7 +2,8 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
-    TokenObtainPairView
+    TokenObtainPairView,
+    TokenVerifyView
 )
 from .views import (
     ProjectViewSet,
@@ -36,6 +37,9 @@ urlpatterns = [
     # JWT
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    # CHANNELS
+    path('notifications/get_ws_token/', NotificationViewSet.as_view({'get': 'get_ws_token'}), name='get_ws_token'),
 ]
 
 urlpatterns += router.urls
