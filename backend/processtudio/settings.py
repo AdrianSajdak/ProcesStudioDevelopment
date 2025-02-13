@@ -42,10 +42,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
     'corsheaders',
     'api',
     'rest_framework',
     'rest_framework_simplejwt',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -105,8 +107,6 @@ DATABASES = {
     }
 }
 
-
-
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -142,6 +142,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -163,4 +164,41 @@ SIMPLE_JWT = {
     'ALGORITHM': 'HS256',              
     'SIGNING_KEY': SECRET_KEY,
     'AUTH_HEADER_TYPES': ('Bearer',),
+    'TOKEN_VERIFY_CLASS': 'rest_framework_simplejwt.tokens.Token',
+}
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis", 6379)],
+            "symmetric_encryption_keys": [SECRET_KEY],
+        },
+    },
+}
+
+ASGI_APPLICATION = 'processtudio.asgi.application'
+CACHE_TTL = 60 * 15
+
+FERNET_KEY = os.getenv('FERNET_KEY')
+
+CORS_ALLOW_WEBSOCKET = True
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://frontend-dev:3000"
+]
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
 }

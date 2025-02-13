@@ -46,22 +46,18 @@ class NotificationManager:
                 else:
                     logger.info(f"Użytkownik {config.recipient.username} nie posiada uprawnień '{config.permission}' do otrzymania powiadomienia.")
             else:
-                notifications = []
+                created_notifications = []
                 for user in User.objects.filter(is_active=True):
                     perms = RolePermissions.get_permissions_for_role(user.role)
                     if perms.get(config.permission, False):
-                        notifications.append(
-                            Notification(
-                                recipient=user,
-                                type=config.type,
-                                title=title,
-                                message=message
-                            )
+                        notification = Notification.objects.create(
+                            recipient=user,
+                            type=config.type,
+                            title=title,
+                            message=message
                         )
-                if notifications:
-                    created_notifications = Notification.objects.bulk_create(notifications)
-                    return created_notifications
-            return None
+                    created_notifications.append(notification)
+                return created_notifications if created_notifications else None
         except Exception as e:
             logger.error(f"Failed to create notification: {str(e)}", exc_info=True)
             return None
