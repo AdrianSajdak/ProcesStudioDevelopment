@@ -13,6 +13,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'processtudio.settings')
 import django
 django.setup()
 
+from django.contrib.staticfiles.handlers import ASGIStaticFilesHandler
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
@@ -20,10 +21,8 @@ from channels.security.websocket import AllowedHostsOriginValidator
 from api.middleware import WebSocketTokenAuthMiddleware
 from api import routing
 
-
-
 application = ProtocolTypeRouter({
-    "http": get_asgi_application(),
+    "http": ASGIStaticFilesHandler(get_asgi_application()),
     "websocket": AllowedHostsOriginValidator(
         WebSocketTokenAuthMiddleware(
             AuthMiddlewareStack(

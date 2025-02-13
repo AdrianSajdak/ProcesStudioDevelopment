@@ -15,7 +15,6 @@ import {
 import * as usersApi from '../../api/usersApi';
 import UserInfoDialog from '../Dialogs/UserInfoDialog';
 import UserEditDialog from '../Dialogs/UserEditDialog';
-import InfoIcon from '@mui/icons-material/Info';
 import EditIcon from '@mui/icons-material/Edit';
 import DownloadIcon from '@mui/icons-material/Download';
 
@@ -44,7 +43,6 @@ const UsersListTab = ({ usersList, showSnackbar, onUserUpdated, loggedInUser }) 
     setSelectedUser(null);
   };
 
-  // Funkcja obsługująca zapis zmian z dialogu edycji
   const handleSaveEdit = async (editedValues) => {
     try {
       const formData = new FormData();

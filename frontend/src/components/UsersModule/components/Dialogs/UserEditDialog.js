@@ -32,7 +32,6 @@ const UserEditDialog = ({ open, onClose, userData, onSave, showSnackbar }) => {
   };
 
   const handleSave = () => {
-    // Tutaj możesz dodać dodatkowe walidacje przed zapisaniem
     onSave(editValues);
   };
 

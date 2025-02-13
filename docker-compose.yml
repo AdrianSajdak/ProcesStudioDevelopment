@@ -24,7 +24,11 @@ services:
         build:
             context: ./backend
             dockerfile: Dockerfile
-        command: daphne -b 0.0.0.0 -p 8000 processtudio.asgi:application
+        command: sh -c "
+                python manage.py makemigrations
+                && python manage.py migrate
+                && python manage.py collectstatic --noinput
+                && daphne -b 0.0.0.0 -p 8000 processtudio.asgi:application"
         volumes:
             - ./backend:/app
         environment:

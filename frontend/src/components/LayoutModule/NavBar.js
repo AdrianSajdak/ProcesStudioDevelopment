@@ -67,7 +67,6 @@ export default function ClippedDrawer(props) {
         
         socketRef.current.onmessage = (e) => {
           const notification = JSON.parse(e.data);
-          // Upewnij się, że nie dodajesz duplikatu – np. przez sprawdzenie unikalnego identyfikatora:
           setNotifications(prev => {
             if (prev.find(n => n.notification_id === notification.notification_id)) {
               return prev;

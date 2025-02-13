@@ -137,7 +137,7 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def upload_profile_picture(self, request):
         """
-        Custom action to upload profile picture, and update first_name and last_name fields
+        Custom action to upload profile picture.
         """
         user = request.user
         file = request.FILES.get('profile_picture')
@@ -155,10 +155,6 @@ class UserViewSet(viewsets.ModelViewSet):
         data = {}
         if file:
             data['profile_picture'] = file
-        if request.data.get('first_name'):
-            data['first_name'] = request.data.get('first_name')
-        if request.data.get('last_name'):
-            data['last_name'] = request.data.get('last_name')
 
         serializer = self.get_serializer(user, data=data, partial=True)
         if serializer.is_valid():
